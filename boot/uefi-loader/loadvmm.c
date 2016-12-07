@@ -133,7 +133,7 @@ efi_main (EFI_HANDLE image, EFI_SYSTEM_TABLE *systab)
 		print (systab, L"FileSystemProtocol ", status);
 		return status;
 	}
-	create_file_path (loaded_image->FilePath, L"bitvisor.elf", file_path,
+	create_file_path (loaded_image->FilePath, L"k2e.elf", file_path,
 			  sizeof file_path / sizeof file_path[0]);
 	fileio = tmp;
 	status = fileio->OpenVolume (fileio, &file);

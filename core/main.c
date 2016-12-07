@@ -72,7 +72,7 @@ static u8 imr_master, imr_slave;
 static void
 print_boot_msg (void)
 {
-	printf ("Starting Orthros...\n");
+	printf ("Starting K2E...\n");
 	printf ("Orthros:  Copyright (c) 2016 Ren Kimura\n");
 	printf ("Bitvisor: Copyright (c) 2007, 2008 University of Tsukuba\n");
 	printf ("All rights reserved.\n");
@@ -485,7 +485,7 @@ vmm_main (struct multiboot_info *mi_arg)
 		memcpy (&mi, mi_arg, sizeof (struct multiboot_info));
 	initfunc_init ();
 	call_initfunc ("global");
-	//start_all_processors (bsp_proc, ap_proc);
+	start_all_processors (bsp_proc, ap_proc);
 }
 
 INITFUNC ("pcpu2", virtualization_init_pcpu);

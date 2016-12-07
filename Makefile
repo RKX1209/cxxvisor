@@ -8,7 +8,7 @@ all : build-all
 .PHONY : clean
 clean : clean-all
 
-NAME   = orthros
+NAME   = k2e
 FORMAT = elf32-i386
 elf    = $(NAME).elf
 map    = $(NAME).map
