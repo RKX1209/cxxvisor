@@ -1,14 +1,16 @@
+typedef long int intptr_t;
+
 typedef struct {
 	int vmmcall_number;
 	int vmmcall_type;
 } call_vmm_function_t;
 
 typedef struct {
-	long long rbx, rcx, rdx, rsi, rdi;
+	intptr_t rbx, rcx, rdx, rsi, rdi;
 } call_vmm_arg_t;
 
 typedef struct {
-	long long rax, rbx, rcx, rdx, rsi, rdi;
+	intptr_t rax, rbx, rcx, rdx, rsi, rdi;
 } call_vmm_ret_t;
 
 struct call_vmm_call_function_sub_data {

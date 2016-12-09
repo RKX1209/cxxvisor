@@ -13,10 +13,13 @@
 static void
 drvhook(void)
 {
-  ulong driver_ip;
+  ulong drvaddr_v, drvaddr_p, size;
   ulong ret = 0;
-  current->vmctl.read_ip(&driver_ip);
-  printf("k2e: driver has loaded at 0x%lx", driver_ip);
+  current->vmctl.read_general_reg(GENERAL_REG_RBX, &drvaddr_v);
+  current->vmctl.read_general_reg(GENERAL_REG_RCX, &drvaddr_p);
+  current->vmctl.read_general_reg(GENERAL_REG_RDX, &size);
+  printf("k2e: driver has loaded at 0x%lx(0x%lx): size=%ul\n",
+          drvaddr_v, drvaddr_p, size);
   current->vmctl.write_general_reg(GENERAL_REG_RAX, (ulong)ret);
 }
 

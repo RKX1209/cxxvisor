@@ -6,11 +6,13 @@
 
 #include <linux/module.h>
 #include <linux/kernel.h>
+#include <linux/init.h>
 #include <linux/types.h>
 #include <asm/uaccess.h>
 #include <asm/cacheflush.h>
 #include <linux/syscalls.h>
 #include <linux/mm.h>
+#include <asm/io.h>
 #include "drvhook.h"
 
 #define VMMCALL_TYPE_ERROR 0
@@ -26,8 +28,12 @@ MODULE_LICENSE("GPL");
 
 /* following string SYSCALL_TABLE_ADDRESS will be replaced by set_syscall_table_address.sh */
 static void **syscall_table = (void *) 0xffffffff81a001c0;
+static char *target = "blahblah";
+module_param(target, charp, S_IRUGO);
+
 asmlinkage long (*orig_sys_init_module)(void __user *umod, unsigned long len, const char __user *uargs);
 asmlinkage long (*orig_sys_finit_module)(int fd, const char __user *uargs, int flags);
+
 
 void
 call_vmm_call_function (call_vmm_function_t *function,
@@ -74,7 +80,7 @@ vmmcall_get_function(const char *vmmcall, call_vmm_function_t *res)
 
   gf.vmmcall_number = GET_VMMCALL_NUMBER;
   gf.vmmcall_type = VMMCALL_TYPE_VMCALL;
-  gf_a.rbx = (long)vmmcall;
+  gf_a.rbx = (intptr_t)vmmcall;
   pr_info("vmmcall_string:%p, 0x%lx, %s\n", vmmcall, gf_a.rbx, vmmcall);
   call_vmm_call_function(&gf, &gf_a, &gf_r);
 
@@ -83,8 +89,24 @@ vmmcall_get_function(const char *vmmcall, call_vmm_function_t *res)
   res->vmmcall_type = VMMCALL_TYPE_VMCALL; // XXX: should get this value too.
 }
 
+static struct module*
+get_module(const char *modname)
+{
+  struct module *mod = NULL;
+  if (mutex_lock_interruptible(&module_mutex) != 0) {
+    goto mutex_fail;
+  }
+
+  mod = find_module(modname);
+
+  mutex_unlock(&module_mutex);
+mutex_fail:
+  pr_info("get_module(%s) = %p\n", modname, mod);
+  return mod;
+}
+
 static void
-vmcall_drvhook (void)
+vmcall_drvhook (void *vmod, unsigned long pmod, unsigned long size)
 {
   call_vmm_function_t drvf;
   call_vmm_arg_t drv_a;
@@ -93,23 +115,41 @@ vmcall_drvhook (void)
 
   vmmcall_get_function(drvhook, &drvf);
   pr_info("drvhook number=%d\n",drvf.vmmcall_number);
+
+  drv_a.rbx = (intptr_t)vmod;
+  drv_a.rcx = (intptr_t)pmod;
+  drv_a.rdx = size;
   call_vmm_call_function(&drvf, &drv_a, &drv_r);
 }
 
 asmlinkage long
 k2e_sys_init_module (void __user *umod, unsigned long len, const char __user *uargs)
 {
+  long orig;
+  struct module *mod = NULL;
   pr_info("call k2e_sys_init_module\n");
-  vmcall_drvhook();
-  return orig_sys_init_module (umod, len, uargs);
+
+  orig = orig_sys_init_module (umod, len, uargs);
+
+  mod = get_module(target);
+  if (mod)
+    vmcall_drvhook(mod->module_core, virt_to_phys(mod->module_core), mod->core_size);
+  return orig;
 }
 
 asmlinkage long
 k2e_sys_finit_module (int fd, const char __user *uargs, int flags)
 {
+  long orig;
+  struct module *mod = NULL;
   pr_info("call k2e_sys_finit_module\n");
-  vmcall_drvhook();
-  return orig_sys_finit_module (fd, uargs, flags);
+
+  orig = orig_sys_finit_module (fd, uargs, flags);
+
+  mod = get_module(target);
+  if (mod)
+    vmcall_drvhook(mod->module_core, virt_to_phys(mod->module_core), mod->core_size);
+  return orig;
 }
 
 static void
@@ -156,7 +196,7 @@ drvhook_init(void)
 
   replace_system_call(k2e_sys_init_module, k2e_sys_finit_module);
   pr_info("system call replaced\n");
-  vmcall_drvhook();
+  //vmcall_drvhook();
   return 0;
 }
 static void
