@@ -47,10 +47,12 @@ typedef unsigned long int	addr_t;
 typedef unsigned long int	virt_t;
 typedef unsigned int		phys32_t;
 typedef unsigned long long int	phys_t;
+#ifndef __cplusplus
 typedef enum {
 	false = 0,
 	true = 1,
 } bool;
+#endif
 union mem {
 	u8 byte;
 	u16 word;
