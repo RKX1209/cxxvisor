@@ -42,17 +42,17 @@ struct list { void *next; };
 
 #define LIST_APPEND(listname, new)			\
 {							\
-	typeof(new) p = listname##_head.next;		\
+	typeof(new) p = (typeof(new))listname##_head.next;		\
 	if (p != NULL) {				\
 		while (p->listname.next != NULL)	\
-			p = p->listname.next;		\
-		p->listname.next = new;			\
+			p = (typeof(p))p->listname.next;		\
+		p->listname.next = (void *)new;			\
 	} else						\
-		listname##_head.next = new;		\
+		listname##_head.next = (void *)new;		\
 	new->listname.next = NULL;			\
 }
 
-#define LIST_FOREACH(listname, p) for (p = listname##_head.next; p != NULL; p = p->listname.next)
+#define LIST_FOREACH(listname, p) for (p = (typeof(p))listname##_head.next; p != NULL; p = (typeof(p))p->listname.next)
 
 #define LIST_NEXT(listname, current) current->listname.next
 #define LIST_HEAD(listname) listname##_head.next
