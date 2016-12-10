@@ -12,6 +12,9 @@ bits-1 = 64
 CFLAGS = -m$(bits-$(CONFIG_64)) -mno-red-zone -mno-sse -nostdinc -g -O \
 -ffreestanding -fno-builtin -fno-stack-protector $(backtrace) \
 -fno-strict-aliasing -Wall $(CONSTANTS-1) -I$(DIR) -Iinclude
+CXXFLAGS = -m$(bits-$(CONFIG_64)) -mno-red-zone -mno-sse -nostdinc -g -O \
+-ffreestanding -fno-builtin -fno-rtti -fno-stack-protector $(backtrace) \
+-fno-strict-aliasing -Wall $(CONSTANTS-1) -I$(DIR) -Iinclude
 ASFLAGS = -m$(bits-$(CONFIG_64)) -g -Wa,-I,$(DIR) -Wa,--divide
 LDFLAGS = -m$(bits-$(CONFIG_64)) -g -nostdlib -Wl,--build-id=none
 outo_p = $(outo)_p
@@ -47,7 +50,8 @@ bstacksize-1-b := $(bstacksize-1-name:%=$(%).)
 bstacksize-1-g := $(foreach i,$(bstacksize-1-name),$($(i)).)
 bstacksize-1 := $(bstacksize-1-$(m))
 bobjs = $(bobjs-1:%=$(dir)%)
-objs = $(objs-1:%=$(dir)%) $(subouto) $(subouta) $(suboutp)
+k2e-objs = $(k2eobjs-1:%=$(dir)%)
+objs = $(objs-1:%=$(dir)%) $(k2e-objs) $(subouto) $(subouta) $(suboutp)
 deps = $(objs-1:%.o=$(dir)%.d) $(bobjs-1:%.o=$(dir)%.d)
 bins = $(bins-1:%=$(dir)%.bin)
 flags-data := CFLAGS=$(CFLAGS) ASFLAGS=$(ASFLAGS) LDFLAGS=$(LDFLAGS)
@@ -135,7 +139,7 @@ $(subouto_p) $(subouta_p) $(suboutp_p) :
 
 # Suffix rules
 .SUFFIXES :
-.SUFFIXES : .c .s .o .bin
+.SUFFIXES : .c .cpp .s .o .bin
 
 .c.o :
 	$(V-info) CC $@
@@ -151,6 +155,10 @@ $(SED) -n -e '1{x' -e 's=^=$@ :>=' -e x -e '}' -e 's/#.*//' \
 -e '/\.include ".*"/{s=.*\.include "\([^"]*\)".*=<$(@D)/\1>=' -e H -e '}' \
 -e '$${x' -e 's/>.</ /g' -e 's/>$$//p' -e 's/.*: *//' \
 -e 's/$$/ :/p' -e '}' $< > $(@:.o=).d || { $(RM) $@; false; }
+
+.cpp.o :
+	$(V-info) CXX $@
+	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
 # include
 include $(dir)$(depends)

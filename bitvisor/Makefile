@@ -23,6 +23,7 @@ subdirs-1 += net
 subdirs-$(CONFIG_IP) += ip
 asubdirs-$(CONFIG_CRYPTO) += crypto
 psubdirs-1 += process
+subdirs-1 += k2e
 
 process-depends-$(CONFIG_CRYPTO) += $(dir)crypto/$(outa_p)
 process-depends-$(CONFIG_IDMAN) += $(dir)idman/$(outo_p)
