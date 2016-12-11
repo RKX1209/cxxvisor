@@ -33,6 +33,8 @@
 struct list { void *next; };
 #define LIST_DEFINE(listname) struct list listname
 #define LIST_DEFINE_HEAD(listname) struct list listname##_head = { NULL }
+#define LIST_DEFINE_HEAD2(listname) struct list listname##_head
+#define LIST_DEFINE_INIT(listname) listname##_head.next = NULL
 
 #define LIST_INSERT(listname, new)			\
 {							\

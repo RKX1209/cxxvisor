@@ -39,7 +39,7 @@ memset_slow (void *addr, int val, int len)
 {
 	char *p;
 
-	p = addr;
+	p = (char*)addr;
 	while (len--)
 		*p++ = val;
 	return addr;
@@ -50,8 +50,8 @@ memcpy_slow (void *dest, void *src, int len)
 {
 	char *p, *q;
 
-	p = dest;
-	q = src;
+	p = (char*)dest;
+	q = (char*)src;
 	while (len--)
 		*p++ = *q++;
 	return dest;
@@ -76,8 +76,8 @@ memcmp_slow (void *p1, void *p2, int len)
 	int r, i;
 	char *q1, *q2;
 
-	q1 = p1;
-	q2 = p2;
+	q1 = (char*)p1;
+	q2 = (char*)p2;
 	for (r = 0, i = 0; !r && i < len; i++)
 		r = *q1++ - *q2++;
 	return r;
