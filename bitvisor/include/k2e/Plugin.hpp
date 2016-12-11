@@ -1,6 +1,9 @@
 #ifndef K2E_PLUGIN_HPP
 #define K2E_PLUGIN_HPP
 
+#include <common/list.h>
+#include <common/types.h>
+
 namespace k2e {
 class K2E;
 struct PluginInfo;
@@ -38,24 +41,50 @@ struct PluginInfo {
 
   /** A function to create a plugin instance */
   Plugin* (*instanceCreator)(K2E*);
+
+  /** List entry */
+  LIST_DEFINE(Plugins);
+};
+
+class PluginsFactory {
+private:
+  static LIST_DEFINE_HEAD2(Plugins);
+public:
+  PluginsFactory()
+  {
+    LIST_DEFINE_INIT(Plugins);
+  }
+  static void registerPlugin(PluginInfo *pluginInfo);
+  const PluginInfo* getPluginInfo(char *name) const;
+  Plugin* createPlugin(K2E* k2e, char *name) const;
+};
+
+class CompiledPlugin {
+private:
+  CompiledPlugin();
+public:
+  CompiledPlugin(PluginInfo *info) {
+    PluginsFactory::registerPlugin(info);
+  }
 };
 
 /** Should be put at the beginning of any K2E plugin */
 #define K2E_PLUGIN                                                                 \
-  private:                                                                       \
-    static const char s_pluginDeps[][64];                                      \
-    static const PluginInfo s_pluginInfo;                                      \
+  public:                                                                       \
+    static char s_pluginDeps[][64];                                      \
+    static PluginInfo s_pluginInfo;                                      \
   public:                                                                        \
-    virtual const PluginInfo* getPluginInfo() const { return &s_pluginInfo; }  \
-    static  const PluginInfo* getPluginInfoStatic() { return &s_pluginInfo; }  \
+    virtual PluginInfo* getPluginInfo() const { return &s_pluginInfo; }  \
+    static PluginInfo* getPluginInfoStatic() { return &s_pluginInfo; }  \
   private:
 
 #define K2E_DEFINE_PLUGIN(className, description, functionName, ...)      \
-  const char className::s_pluginDeps[][64] = { __VA_ARGS__ };                   \
-  const PluginInfo className::s_pluginInfo = {                                   \
+  char className::s_pluginDeps[][64] = { __VA_ARGS__ };                   \
+  PluginInfo className::s_pluginInfo = {                                   \
       #className, description, functionName,                                     \
       _pluginCreatorHelper<className>                                            \
   }; \
+  static CompiledPlugin s_##className(className::getPluginInfoStatic())
 
 template<class C>
 Plugin* _pluginCreatorHelper(K2E* k2e) { return new C(k2e); }

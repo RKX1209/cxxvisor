@@ -2,6 +2,7 @@
 #define K2E_CORE_PLUGIN_H
 
 #include <k2e/Plugin.hpp>
+#include <k2e/ModuleDescriptor.h>
 #include "../Signals/Signals.hpp"
 
 namespace k2e {
@@ -13,7 +14,7 @@ public:
 
   }
   void initialize();
-
+  sigc::signal onModuleLoad;
 };
 
 }
