@@ -61,6 +61,8 @@
 #include "vt.h"
 #include "vt_init.h"
 
+#include <k2e/k2e_bitvisor.h>
+
 static struct multiboot_info mi;
 static u32 minios_startaddr;
 static u32 minios_paramsaddr;
@@ -485,6 +487,7 @@ vmm_main (struct multiboot_info *mi_arg)
 		memcpy (&mi, mi_arg, sizeof (struct multiboot_info));
 	initfunc_init ();
 	call_initfunc ("global");
+	g_k2e = k2e_initialize();
 	start_all_processors (bsp_proc, ap_proc);
 }
 

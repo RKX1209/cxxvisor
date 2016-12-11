@@ -8,6 +8,7 @@ void Plugin::initialize(void)
 {
 }
 
+struct list PluginsFactory::Plugins_head = { 0 }; //XXX: bit ugly
 void PluginsFactory::registerPlugin(PluginInfo *pluginInfo)
 {
   LIST_APPEND(Plugins, pluginInfo);

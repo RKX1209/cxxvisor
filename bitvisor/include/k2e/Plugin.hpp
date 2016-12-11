@@ -50,10 +50,7 @@ class PluginsFactory {
 private:
   static LIST_DEFINE_HEAD2(Plugins);
 public:
-  PluginsFactory()
-  {
-    LIST_DEFINE_INIT(Plugins);
-  }
+  PluginsFactory() {}
   static void registerPlugin(PluginInfo *pluginInfo);
   const PluginInfo* getPluginInfo(char *name) const;
   Plugin* createPlugin(K2E* k2e, char *name) const;

@@ -22,9 +22,9 @@ void K2E::initPlugins()
 
 extern "C" {
 
-K2E *g_k2e = 0;
+K2E* g_k2e = 0;
 
-K2E *k2e_initialize()
+K2E* k2e_initialize()
 {
   return (K2E*)new K2E();
 }
