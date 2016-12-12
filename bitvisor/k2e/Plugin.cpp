@@ -1,6 +1,9 @@
 #include <k2e/Plugin.hpp>
 #include <k2e/K2E.hpp>
 #include <core/string.h>
+extern "C" {
+#include <core/printf.h>
+}
 
 namespace k2e {
 
@@ -11,6 +14,7 @@ void Plugin::initialize(void)
 struct list PluginsFactory::Plugins_head = { 0 }; //XXX: bit ugly
 void PluginsFactory::registerPlugin(PluginInfo *pluginInfo)
 {
+  //printf("Factory::register %s\n", pluginInfo->name);
   LIST_APPEND(Plugins, pluginInfo);
 }
 

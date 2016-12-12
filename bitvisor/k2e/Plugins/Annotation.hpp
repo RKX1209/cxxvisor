@@ -9,7 +9,7 @@ namespace k2e {
 class Annotation : public Plugin {
   K2E_PLUGIN
 public:
-  Annotation(K2E *k2e): Plugin(k2e) { initialize(); }
+  Annotation(K2E *k2e): Plugin(k2e) {}
   void initialize();
   void onModuleLoad(K2ECallbackParams *params);
 };

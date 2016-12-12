@@ -22,8 +22,6 @@ drvhook(void)
   current->vmctl.read_general_reg(GENERAL_REG_RBX, &md->LoadVBase);
   current->vmctl.read_general_reg(GENERAL_REG_RCX, &md->LoadPBase);
   current->vmctl.read_general_reg(GENERAL_REG_RDX, &md->Size);
-  // printf("k2e: driver has loaded at 0x%lx(0x%lx): size=%ul\n",
-  //         drvaddr_v, drvaddr_p, size);
   k2e_on_module_load(g_k2e, md);
   current->vmctl.write_general_reg(GENERAL_REG_RAX, (ulong)ret);
 }

@@ -479,6 +479,13 @@ bsp_proc (void)
 	call_initfunc ("pcpu");
 }
 
+static void
+k2e_init (void)
+{
+	g_k2e = k2e_initialize();
+	k2e_initplugins();
+}
+
 asmlinkage void
 vmm_main (struct multiboot_info *mi_arg)
 {
@@ -487,7 +494,6 @@ vmm_main (struct multiboot_info *mi_arg)
 		memcpy (&mi, mi_arg, sizeof (struct multiboot_info));
 	initfunc_init ();
 	call_initfunc ("global");
-	g_k2e = k2e_initialize();
 	start_all_processors (bsp_proc, ap_proc);
 }
 
@@ -498,3 +504,4 @@ INITFUNC ("bsp0", debug_on_shift_key);
 INITFUNC ("global1", print_boot_msg);
 INITFUNC ("global3", copy_minios);
 INITFUNC ("global3", get_shiftflags);
+INITFUNC ("vmmcal1", k2e_init);

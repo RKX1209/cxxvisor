@@ -12,7 +12,7 @@ class Plugin {
 private:
   K2E * m_k2e;
 public:
-  Plugin(K2E *k2e) {}
+  Plugin(K2E *k2e) : m_k2e(k2e){}
 
   /** Return associated K2E instance. */
   K2E* k2e() { return m_k2e; }
@@ -80,10 +80,9 @@ public:
   PluginInfo className::s_pluginInfo = {                                   \
       #className, description, functionName,                                     \
       _pluginCreatorHelper<className>                                            \
-  }; \
-  static CompiledPlugin s_##className(className::getPluginInfoStatic())
+  };
 
 template<class C>
-Plugin* _pluginCreatorHelper(K2E* k2e) { return new C(k2e); }
+Plugin* _pluginCreatorHelper(K2E* k2e) { Plugin* pl = new C(k2e); pl->initialize(); return pl; }
 }
 #endif

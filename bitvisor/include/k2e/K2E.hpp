@@ -6,6 +6,7 @@ namespace k2e {
 class Plugin;
 class PluginsFactory;
 class CorePlugin;
+class Annotation;
 
 class K2E
 {
@@ -13,10 +14,12 @@ protected:
   PluginsFactory* m_pluginsFactory;
 
   CorePlugin* m_corePlugin;
+  Annotation* m_annotation;
 
-  void initPlugins();
 public:
   K2E();
+  void init();
+  void initPlugins();  
   /** Get Core plugin */
   inline CorePlugin* getCorePlugin() const { return m_corePlugin; }
 };

@@ -6,7 +6,7 @@ extern "C" {
 #include <k2e/ModuleDescriptor.h>
 
 namespace k2e {
-  
+
 K2E_DEFINE_PLUGIN(Annotation, "Plugin for monitoring module and bypasses functions", "Annotation");
 
 void Annotation::initialize()

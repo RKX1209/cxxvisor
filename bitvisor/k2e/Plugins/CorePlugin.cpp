@@ -1,4 +1,7 @@
 #include "CorePlugin.hpp"
+extern "C" {
+#include <core/printf.h>
+}
 #include <k2e/K2E.hpp>
 
 namespace k2e {
@@ -8,7 +11,6 @@ using namespace k2e;
 
 void CorePlugin::initialize()
 {
-
 }
 
 /******************************/
@@ -19,6 +21,7 @@ void k2e_on_module_load(K2E* k2e, struct ModuleDescriptor *module)
 {
   K2ECallbackParams params;
   params.ml.md = module;
+  //printf("k2e(%p)->getCorePlugin()(%p) %llx(%llx)\n", k2e, k2e->getCorePlugin(), params.ml.md->LoadVBase, params.ml.md->LoadPBase);
   k2e->getCorePlugin()->onModuleLoad.emit(&params);
 }
 
