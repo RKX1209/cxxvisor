@@ -10,12 +10,15 @@ using k2e::K2E;
 struct K2E;
 #endif
 
+struct ModuleDescriptor;
 #ifdef __cplusplus
 extern "C" {
 #endif
 extern struct K2E* g_k2e;
 
 struct K2E* k2e_initialize();
+
+void k2e_on_module_load(struct K2E* k2e, struct ModuleDescriptor *module);
 
 #ifdef __cplusplus
 }

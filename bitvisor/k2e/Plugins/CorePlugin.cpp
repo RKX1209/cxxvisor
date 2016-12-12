@@ -11,7 +11,15 @@ void CorePlugin::initialize()
 
 }
 
-void k2e_on_module_load(ModuleDescriptor *module)
+/******************************/
+/* Functions called from Bitvisor */
+extern "C" {
+
+void k2e_on_module_load(K2E* k2e, struct ModuleDescriptor *module)
 {
+  K2ECallbackParams params;
+  params.ml.md = module;
+  k2e->getCorePlugin()->onModuleLoad.emit(&params);
+}
 
 }
