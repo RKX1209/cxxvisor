@@ -70,7 +70,7 @@ call_vmm_call_function (call_vmm_function_t *function,
   	}
 }
 
-/* Get a entry number of specified vmmcall */
+/* Get an entry number of specified vmmcall */
 void
 vmmcall_get_function(const char *vmmcall, call_vmm_function_t *res)
 {
@@ -106,7 +106,19 @@ mutex_fail:
 }
 
 static void
-vmcall_drvhook (void *vmod, unsigned long pmod, unsigned long size)
+gen_phys_list (void *vmod, unsigned long size)
+{
+  /* [vmod, vmod+size] area is physically not-contiguous,
+      because it's allocated by vmalloc() in module_alloc. */
+  u64 p = vmod, phys;
+  for (p = vmod; p < (u64)vmod + size; p += PAGE_SIZE) {
+    phys = page_to_phys(vmalloc_to_page((void*)p));
+    pr_info("module: 0x%llx => [0x%llx,0x%llx]\n", p, phys, phys+PAGE_SIZE);
+  }
+}
+
+static void
+vmcall_drvhook (void *vmod, unsigned long size)
 {
   call_vmm_function_t drvf;
   call_vmm_arg_t drv_a;
@@ -117,8 +129,9 @@ vmcall_drvhook (void *vmod, unsigned long pmod, unsigned long size)
   pr_info("drvhook number=%d\n",drvf.vmmcall_number);
 
   drv_a.rbx = (intptr_t)vmod;
-  drv_a.rcx = (intptr_t)pmod;
+  //drv_a.rcx = (intptr_t)pmod;
   drv_a.rdx = size;
+  gen_phys_list(vmod, size);
   call_vmm_call_function(&drvf, &drv_a, &drv_r);
 }
 
@@ -133,7 +146,7 @@ k2e_sys_init_module (void __user *umod, unsigned long len, const char __user *ua
 
   mod = get_module(target);
   if (mod)
-    vmcall_drvhook(mod->module_core, virt_to_phys(mod->module_core), mod->core_size);
+    vmcall_drvhook(mod->module_core, mod->core_size);
   return orig;
 }
 
@@ -148,7 +161,7 @@ k2e_sys_finit_module (int fd, const char __user *uargs, int flags)
 
   mod = get_module(target);
   if (mod)
-    vmcall_drvhook(mod->module_core, virt_to_phys(mod->module_core), mod->core_size);
+    vmcall_drvhook(mod->module_core, mod->core_size);
   return orig;
 }
 
