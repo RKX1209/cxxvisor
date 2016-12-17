@@ -8,6 +8,7 @@
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/types.h>
+#include <linux/vmalloc.h>
 #include <asm/uaccess.h>
 #include <asm/cacheflush.h>
 #include <linux/syscalls.h>
@@ -29,6 +30,7 @@ MODULE_LICENSE("GPL");
 /* following string SYSCALL_TABLE_ADDRESS will be replaced by set_syscall_table_address.sh */
 static void **syscall_table = (void *) 0xffffffff81a001c0;
 static char *target = "blahblah";
+u64 *mod_area_phys = 0;
 module_param(target, charp, S_IRUGO);
 
 asmlinkage long (*orig_sys_init_module)(void __user *umod, unsigned long len, const char __user *uargs);
@@ -81,7 +83,7 @@ vmmcall_get_function(const char *vmmcall, call_vmm_function_t *res)
   gf.vmmcall_number = GET_VMMCALL_NUMBER;
   gf.vmmcall_type = VMMCALL_TYPE_VMCALL;
   gf_a.rbx = (intptr_t)vmmcall;
-  pr_info("vmmcall_string:%p, 0x%lx, %s\n", vmmcall, gf_a.rbx, vmmcall);
+  //pr_info("vmmcall_string:%p, 0x%lx, %s\n", vmmcall, gf_a.rbx, vmmcall);
   call_vmm_call_function(&gf, &gf_a, &gf_r);
 
   /* RAX = vmmcall number */
@@ -111,9 +113,11 @@ gen_phys_list (void *vmod, unsigned long size)
   /* [vmod, vmod+size] area is physically not-contiguous,
       because it's allocated by vmalloc() in module_alloc. */
   u64 p = vmod, phys;
+  mod_area_phys = (u64*)vmalloc(size / PAGE_SIZE);
   for (p = vmod; p < (u64)vmod + size; p += PAGE_SIZE) {
     phys = page_to_phys(vmalloc_to_page((void*)p));
-    pr_info("module: 0x%llx => 0x%llx\n", p, phys);
+    pr_info("module: 0x%llx => [0x%llx,0x%llx]\n", p, phys, phys+PAGE_SIZE);
+    mod_area_phys[(p - (u64)vmod) / PAGE_SIZE] = phys;
   }
 }
 
@@ -128,10 +132,10 @@ vmcall_drvhook (void *vmod, unsigned long size)
   vmmcall_get_function(drvhook, &drvf);
   pr_info("drvhook number=%d\n",drvf.vmmcall_number);
 
-  drv_a.rbx = (intptr_t)vmod;
-  //drv_a.rcx = (intptr_t)pmod;
-  drv_a.rdx = size;
   gen_phys_list(vmod, size);
+  drv_a.rbx = (intptr_t)mod_area_phys;
+  drv_a.rcx = (intptr_t)page_to_phys(vmalloc_to_page((void*)mod_area_phys));
+  drv_a.rdx = size;
   call_vmm_call_function(&drvf, &drv_a, &drv_r);
 }
 
@@ -209,7 +213,6 @@ drvhook_init(void)
 
   replace_system_call(k2e_sys_init_module, k2e_sys_finit_module);
   pr_info("system call replaced\n");
-  //vmcall_drvhook();
   return 0;
 }
 static void
@@ -218,6 +221,8 @@ drvhook_cleanup(void)
   pr_info("cleanup");
   if (orig_sys_init_module && orig_sys_finit_module)
     replace_system_call(orig_sys_init_module, orig_sys_finit_module);
+  if (mod_area_phys)
+    vfree(mod_area_phys);
 }
 
 module_init(drvhook_init);
