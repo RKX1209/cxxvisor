@@ -114,7 +114,7 @@ gen_phys_list (void *vmod, unsigned long size)
   /* [vmod, vmod+size] area is physically not-contiguous,
       because it's allocated by vmalloc() in module_alloc. */
   u64 p = vmod, phys;
-  mod_area_phys = (u64*)kmalloc(size / PAGE_SIZE, GFP_KERNEL);
+  mod_area_phys = (u64*)kmalloc(sizeof(u64) * (size / PAGE_SIZE), GFP_KERNEL);
   for (p = vmod; p < (u64)vmod + size; p += PAGE_SIZE) {
     phys = page_to_phys(vmalloc_to_page((void*)p));
     pr_info("module: 0x%llx => [0x%llx,0x%llx]\n", p, phys, phys+PAGE_SIZE);
