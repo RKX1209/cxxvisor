@@ -34,6 +34,8 @@
 #include "gmm_access.h"
 #include "mm.h"
 #include "panic.h"
+#include "pcpu.h"
+#include "printf.h"
 #include "string.h"
 #include "vt_ept.h"
 #include "vt_main.h"
@@ -44,6 +46,7 @@
 #define EPTE_READ	0x1
 #define EPTE_READEXEC	0x5
 #define EPTE_WRITE	0x2
+#define EPTE_EXEC	0x4
 #define EPTE_LARGE	0x80
 #define EPTE_ATTR_MASK	0xFFF
 #define EPTE_MT_SHIFT	3
@@ -62,6 +65,16 @@ struct vt_ept {
 		u64 *entry[EPT_LEVELS];
 	} cur;
 };
+
+struct vt_exec_hook {
+	virt_t gvirt;
+	u32 size;
+	u64 *mod_areas;
+	u8 available;
+};
+
+struct vt_exec_hook hook_point = { 0, 0, 0, 0 };
+bool nmi_by_host = false;
 
 void
 vt_ept_init (void)
@@ -141,6 +154,29 @@ cur_fill (struct vt_ept *ept, u64 gphys, int level)
 	return p;
 }
 
+bool
+in_hook_point (struct vt_exec_hook* hook, virt_t gvirt)
+{
+	if (hook->available) {
+		//if (hook->gvirt <= gvirt && gvirt <= hook->gvirt + hook->size)
+			return true;
+	}
+	return false;
+}
+
+bool
+in_hook_point2 (struct vt_exec_hook* hook, u64 gphys)
+{
+	u64* m = (u64*)(hook->mod_areas);
+	u32 i;
+	if (hook->available) {
+			for (i = 0; i < hook->size; i++) {
+				if (m[i] <= gphys && gphys <= m[i] + PAGESIZE) return true;
+			}
+	}
+	return false;
+}
+
 static void
 vt_ept_map_page_sub (struct vt_ept *ept, bool write, u64 gphys)
 {
@@ -154,8 +190,16 @@ vt_ept_map_page_sub (struct vt_ept *ept, bool write, u64 gphys)
 	hphys = current->gmm.gp2hp (gphys, &fakerom) & ~PAGESIZE_MASK;
 	if (fakerom && write)
 		panic ("EPT: Writing to VMM memory.");
-	hattr = (cache_get_gmtrr_type (gphys) << EPTE_MT_SHIFT) |
-		EPTE_READEXEC | EPTE_WRITE;
+
+	if (in_hook_point2 (&hook_point, gphys)) {
+		hattr = (cache_get_gmtrr_type (gphys) << EPTE_MT_SHIFT) |
+			EPTE_READ | EPTE_WRITE; // witout EXEC permission
+		printf("remove x-bit from 0x%llx\n", gphys);
+	}
+	else
+		hattr = (cache_get_gmtrr_type (gphys) << EPTE_MT_SHIFT) |
+			EPTE_READEXEC | EPTE_WRITE;
+
 	if (fakerom)
 		hattr &= ~EPTE_WRITE;
 	*p = hphys | hattr;
@@ -238,6 +282,37 @@ vt_ept_map_page (struct vt_ept *ept, bool write, u64 gphys)
 }
 
 void
+vt_ept_set_hook (u64 gphys, u32 size)
+{
+	struct vt_ept *ept;
+	u32 i;
+	u64 gp;
+	u64 *m;
+	hook_point.mod_areas = (u64*)alloc(sizeof *m * size);
+	hook_point.size = size;
+	hook_point.available = 1;
+
+	ept = current->u.vt.ept;
+
+	/* Clearing EPT entries, to hook */
+	vt_ept_clear_all_slow();
+	
+	printf("vt_ept_set_hook 0x%llx(%d)\n", gphys, size);
+
+	/* remap address range of kernel module
+	 * TODO: 2M page
+	 */
+	m = hook_point.mod_areas;
+
+	for (i = 0; i < hook_point.size; i++) {
+		read_gphys_q(gphys + sizeof(u64) * i, (void*)&m[i], 0);
+		printf("ares[%d] = 0x%llx\n", i, m[i]);
+		vt_ept_map_page(ept, false, m[i]);
+	}
+
+}
+
+void
 vt_ept_violation (bool write, u64 gphys)
 {
 	struct vt_ept *ept;
@@ -256,6 +331,7 @@ vt_ept_violation (bool write, u64 gphys)
 void
 vt_ept_tlbflush (void)
 {
+	vt_paging_flush_guest_tlb ();
 }
 
 void
@@ -283,6 +359,24 @@ vt_ept_updatecr3 (void)
 }
 
 void
+vt_flush_all_tlb (void)
+{
+	nmi_by_host = true;
+	u8 id;
+	printf("vt_flush_all_tlb\n");
+	// for (id = 0; id < 4; id++) {
+	// 	nmi_by_host = true;
+	// 	send_nmi_to_core(id);
+	// }
+	// nmi_by_host = true;
+	// send_nmi_to_core(1);
+	nmi_by_host = true;
+	send_nmi_to_core(2);
+	// nmi_by_host = true;
+	// send_nmi_to_core(3);
+}
+
+void
 vt_ept_clear_all (void)
 {
 	struct vt_ept *ept;
@@ -293,6 +387,28 @@ vt_ept_clear_all (void)
 	ept->cnt = 0;
 	ept->cur.level = EPT_LEVELS;
 	vt_paging_flush_guest_tlb ();
+}
+
+void
+vt_ept_clear_all_slow (void)
+{
+	struct vt_ept *ept;
+	unsigned int i;
+
+	ept = current->u.vt.ept;
+	memset (ept->ncr3tbl, 0, PAGESIZE);
+	ept->cleared = 1;
+	ept->cnt = 0;
+	ept->cur.level = EPT_LEVELS;
+
+	for (i = 0; i < NUM_OF_EPTBL; i++)
+		memset(ept->tbl[i], 0, PAGESIZE);
+
+	/* TLB clear of self processor */
+	vt_paging_flush_guest_tlb ();
+	printf("Processor %d tlb flush\n", currentcpu->cpunum);
+	/* TLB shootdown (other processors) */
+	vt_flush_all_tlb();
 }
 
 bool

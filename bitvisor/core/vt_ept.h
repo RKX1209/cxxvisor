@@ -33,13 +33,22 @@
 #include "types.h"
 
 struct vcpu;
+struct vt_exec_hook;
+
+extern struct vt_exec_hook hook_point;
+extern bool nmi_by_host;
 
 void vt_ept_init (void);
 void vt_ept_violation (bool write, u64 gphys);
 void vt_ept_tlbflush (void);
 void vt_ept_updatecr3 (void);
 void vt_ept_clear_all (void);
+void vt_ept_clear_all_slow (void);
 bool vt_ept_extern_mapsearch (struct vcpu *p, phys_t start, phys_t end);
 void vt_ept_map_1mb (void);
+void vt_ept_set_hook (u64 gvirt, u32 size);
+bool in_hook_point (struct vt_exec_hook* hook, virt_t gvirt);
+bool in_hook_point2 (struct vt_exec_hook* hook, u64 gphys);
+
 
 #endif

@@ -71,6 +71,7 @@ vt_paging_flush_guest_tlb (void)
 	struct invvpid_desc desc;
 	struct invept_desc eptdesc;
 	ulong vpid;
+	virt_t tmp;
 
 	vpid = current->u.vt.vpid;
 	if (vpid) {
@@ -81,6 +82,11 @@ vt_paging_flush_guest_tlb (void)
 		eptdesc.reserved = 0;
 		asm_invept (INVEPT_TYPE_ALL_CONTEXTS, &eptdesc);
 	}
+	asm volatile (					
+		"mov %%cr3, %0;  # flush TLB \n"
+		"mov %0, %%cr3;              \n"
+		: "=r" (tmp)			
+		:: "memory");				
 }
 
 void
