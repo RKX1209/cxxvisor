@@ -7,6 +7,7 @@
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
+#include <linux/slab.h>
 #include <linux/types.h>
 #include <linux/vmalloc.h>
 #include <asm/uaccess.h>
@@ -113,7 +114,7 @@ gen_phys_list (void *vmod, unsigned long size)
   /* [vmod, vmod+size] area is physically not-contiguous,
       because it's allocated by vmalloc() in module_alloc. */
   u64 p = vmod, phys;
-  mod_area_phys = (u64*)vmalloc(size / PAGE_SIZE);
+  mod_area_phys = (u64*)kmalloc(size / PAGE_SIZE, GFP_KERNEL);
   for (p = vmod; p < (u64)vmod + size; p += PAGE_SIZE) {
     phys = page_to_phys(vmalloc_to_page((void*)p));
     pr_info("module: 0x%llx => [0x%llx,0x%llx]\n", p, phys, phys+PAGE_SIZE);
@@ -134,8 +135,8 @@ vmcall_drvhook (void *vmod, unsigned long size)
 
   gen_phys_list(vmod, size);
   drv_a.rbx = (intptr_t)mod_area_phys;
-  drv_a.rcx = (intptr_t)page_to_phys(vmalloc_to_page((void*)mod_area_phys));
-  drv_a.rdx = size;
+  drv_a.rcx = (intptr_t)__pa((void*)mod_area_phys);
+  drv_a.rdx = size / PAGE_SIZE;
   call_vmm_call_function(&drvf, &drv_a, &drv_r);
 }
 
@@ -222,7 +223,7 @@ drvhook_cleanup(void)
   if (orig_sys_init_module && orig_sys_finit_module)
     replace_system_call(orig_sys_init_module, orig_sys_finit_module);
   if (mod_area_phys)
-    vfree(mod_area_phys);
+    kfree(mod_area_phys);
 }
 
 module_init(drvhook_init);
