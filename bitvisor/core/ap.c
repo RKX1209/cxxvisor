@@ -51,6 +51,8 @@
 #define ICR_MODE_NMI		0x400
 #define ICR_MODE_INIT		0x500
 #define ICR_MODE_STARTUP	0x600
+#define ICR_DEST_MODE_LOGICAL	0x800
+#define ICR_DEST_MODE_PHYSICAL	0x000
 #define ICR_STATUS_BIT		0x1000
 #define ICR_STATUS_IDLE		0x0000
 #define ICR_STATUS_PENDING	0x1000
@@ -236,6 +238,67 @@ apic_send_nmi (volatile u32 *apic_icr)
 	write_icr (apic_icr, ICR_DEST_OTHER | ICR_TRIGGER_EDGE |
 		   ICR_LEVEL_ASSERT | ICR_MODE_NMI);
 	apic_wait_for_idle (apic_icr);
+}
+
+static void
+apic_send_nmi_to_core (volatile u32 *apic_icr_low, volatile u32 *apic_icr_high,
+		       u8 coreid)
+{
+	printf("sending to processor %d\n", coreid);
+	apic_wait_for_idle (apic_icr_low);
+	//coreid *= 2;		/* FIXME: If HT is enabled, this code is needed. */
+	*apic_icr_high = ((u32)coreid << 24);
+	*apic_icr_low  = ICR_TRIGGER_EDGE | ICR_LEVEL_ASSERT | ICR_DEST_MODE_PHYSICAL | ICR_MODE_NMI;
+	apic_wait_for_idle (apic_icr_low);
+	printf("complete processor %d\n", coreid);	
+}
+
+void
+send_nmi_to_core (u8 coreid)
+//send_nmi_to_core ()
+{
+	static const u64 apic_base = 0xFEE00000;
+	static const u32 apic_icr_phys_low = 0xFEE00300;
+	static const u32 apic_icr_phys_high = 0xFEE00310;
+	static const u32 apic_id_phys = 0xFEE00020;
+	u64 tmp;
+	volatile u32 *apic_icr_low;
+	volatile u32 *apic_icr_high;
+	volatile u32 *apic_id;
+
+	if (!apic_available ())
+		return;
+	if (!ap_started)
+		return;
+	asm_rdmsr64 (MSR_IA32_APIC_BASE_MSR, &tmp);
+	if (!(tmp & MSR_IA32_APIC_BASE_MSR_APIC_GLOBAL_ENABLE_BIT))
+		return;
+	tmp &= ~MSR_IA32_APIC_BASE_MSR_APIC_BASE_MASK;
+	tmp |= apic_base;
+	asm_wrmsr64 (MSR_IA32_APIC_BASE_MSR, tmp);
+
+	apic_id= mapmem (MAPMEM_HPHYS | MAPMEM_PWT | MAPMEM_PCD,
+			       apic_id_phys, sizeof *apic_id);
+	if (!apic_id)
+		return;
+
+
+	apic_icr_low = mapmem (MAPMEM_HPHYS | MAPMEM_WRITE | MAPMEM_PWT |
+			       MAPMEM_PCD, apic_icr_phys_low,
+			       sizeof *apic_icr_low);
+
+	if (!apic_icr_low)
+		return;
+	apic_icr_high = mapmem (MAPMEM_HPHYS | MAPMEM_WRITE | MAPMEM_PWT |
+				MAPMEM_PCD, apic_icr_phys_high,
+				sizeof *apic_icr_high);
+	if (!apic_icr_high)
+		return;
+
+	apic_send_nmi_to_core (apic_icr_low, apic_icr_high, coreid);
+	//apic_send_nmi(apic_icr_low);
+	unmapmem ((void *)apic_icr_low, sizeof *apic_icr_low);
+	unmapmem ((void *)apic_icr_high, sizeof *apic_icr_high);
 }
 
 void

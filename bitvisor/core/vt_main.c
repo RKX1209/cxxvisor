@@ -48,6 +48,7 @@
 #include "vmmcall_status.h"
 #include "vt.h"
 #include "vt_addip.h"
+#include "vt_ept.h"
 #include "vt_exitreason.h"
 #include "vt_init.h"
 #include "vt_io.h"
@@ -57,6 +58,7 @@
 #include "vt_vmcs.h"
 
 #define EPT_VIOLATION_EXIT_QUAL_WRITE_BIT 0x2
+#define EPT_VIOLATION_EXIT_QUAL_EXEC_BIT 0x4
 #define STAT_EXIT_REASON_MAX EXIT_REASON_XSETBV
 
 enum vt__status {
@@ -163,52 +165,35 @@ vt_update_exception_bmp (void)
 }
 
 static void
-vt_generate_nmi (void)
+seize_nmi (void)
 {
-	struct vt_intr_data *vid = &current->u.vt.intr;
-
-	if (current->u.vt.vr.re)
-		panic ("NMI in real mode");
-	vid->vmcs_intr_info.v = 0;
-	vid->vmcs_intr_info.s.vector = EXCEPTION_NMI;
-	vid->vmcs_intr_info.s.type = INTR_INFO_TYPE_NMI;
-	vid->vmcs_intr_info.s.err = INTR_INFO_ERR_INVALID;
-	vid->vmcs_intr_info.s.valid = INTR_INFO_VALID_VALID;
-	vid->vmcs_instruction_len = 0;
+	/* FIXME: Support only 64bit */
+ asm volatile (
+		"mov %%rsp, %%rbx   \n"
+		"xor %%rax, %%rax   \n"
+		"mov %%ss, %%ax     \n"
+		"pushq %%rax        \n"
+		"pushq %%rbx        \n"
+		"pushfq             \n"
+		"mov %%cs, %%ax     \n"
+		"pushq %%rax        \n"
+		"mov $next, %%rax   \n"
+		"pushq %%rax        \n"
+		"iretq              \n"
+		"next:              \n"
+		"nop                \n"
+		:
+		:
+		: "rax", "rbx", "memory"
+		);
 }
 
-/* NMI handler.  FIXME: This is currently pass-through only. */
 static void
-vt_nmi_has_come (void)
+handle_nmi_by_host (void)
 {
-	ulong is, proc_based_vmexec_ctl;
-
-	/* If blocking by NMI bit is set, the NMI will not be
-	 * generated since an NMI handler in the guest operating
-	 * system is running. */
-	asm_vmread (VMCS_GUEST_INTERRUPTIBILITY_STATE, &is);
-	if (is & VMCS_GUEST_INTERRUPTIBILITY_STATE_BLOCKING_BY_NMI_BIT)
-		return;
-	/* If NMI-window exiting bit is set, VM Exit reason "NMI
-	   window" will generate NMI. */
-	asm_vmread (VMCS_PROC_BASED_VMEXEC_CTL, &proc_based_vmexec_ctl);
-	if (proc_based_vmexec_ctl & VMCS_PROC_BASED_VMEXEC_CTL_NMIWINEXIT_BIT)
-		return;
-	/* If blocking by STI bit and blocking by MOV SS bit are not
-	   set, generate NMI now. */
-	if (!(is & VMCS_GUEST_INTERRUPTIBILITY_STATE_BLOCKING_BY_STI_BIT) &&
-	    !(is & VMCS_GUEST_INTERRUPTIBILITY_STATE_BLOCKING_BY_MOV_SS_BIT)) {
-		vt_generate_nmi ();
-		return;
-	}
-	/* Use NMI-window exiting to get the correct timing to inject
-	 * NMIs.  This is a workaround for a processor that makes a VM
-	 * Entry failure when NMI is injected while blocking by STI
-	 * bit is set. */
-	proc_based_vmexec_ctl |= VMCS_PROC_BASED_VMEXEC_CTL_NMIWINEXIT_BIT;
-	asm_vmwrite (VMCS_PROC_BASED_VMEXEC_CTL, proc_based_vmexec_ctl);
+	printf("Processor %d: tlb flush\n", currentcpu->cpunum);
+	vt_ept_tlbflush();
 }
-
 static void
 do_exception (void)
 {
@@ -299,7 +284,16 @@ do_exception (void)
 			current->u.vt.intr.vmcs_instruction_len = len;
 			break;
 		case INTR_INFO_TYPE_NMI:
-			vt_nmi_has_come ();
+			if(nmi_by_host){
+				nmi_by_host = false;
+				handle_nmi_by_host ();
+				seize_nmi();
+				break;
+			}
+			vii.s.nmi = 0; /* FIXME */
+			current->u.vt.intr.vmcs_intr_info.v = vii.v;
+			asm_vmread (VMCS_VMEXIT_INSTRUCTION_LEN, &len);
+			current->u.vt.intr.vmcs_instruction_len = len;
 			break;
 		case INTR_INFO_TYPE_EXTERNAL:
 		default:
@@ -329,23 +323,6 @@ do_vmcall (void)
 }
 
 static void
-do_nmi_window (void)
-{
-	struct vt_intr_data *vid = &current->u.vt.intr;
-	ulong proc_based_vmexec_ctl;
-
-	if (vid->vmcs_intr_info.s.valid == INTR_INFO_VALID_VALID) {
-		/* This may be incorrect behavior... */
-		printf ("Maskable interrupt and NMI at the same time\n");
-		return;
-	}
-	asm_vmread (VMCS_PROC_BASED_VMEXEC_CTL, &proc_based_vmexec_ctl);
-	proc_based_vmexec_ctl &= ~VMCS_PROC_BASED_VMEXEC_CTL_NMIWINEXIT_BIT;
-	asm_vmwrite (VMCS_PROC_BASED_VMEXEC_CTL, proc_based_vmexec_ctl);
-	vt_generate_nmi ();
-}
-
-static void
 vt__nmi (void)
 {
 	struct vt_intr_data *vid = &current->u.vt.intr;
@@ -354,7 +331,18 @@ vt__nmi (void)
 		return;
 	if (!current->nmi.get_nmi_count ())
 		return;
-	vt_nmi_has_come ();
+	if (current->u.vt.vr.re)
+		panic ("NMI in real mode");
+		if (nmi_by_host){
+		nmi_by_host = false;
+    handle_nmi_by_host ();
+		return;
+	}
+	vid->vmcs_intr_info.v = 0;
+	vid->vmcs_intr_info.s.vector = EXCEPTION_NMI;
+	vid->vmcs_intr_info.s.type = INTR_INFO_TYPE_NMI;
+	vid->vmcs_intr_info.s.err = INTR_INFO_ERR_INVALID;
+	vid->vmcs_intr_info.s.valid = INTR_INFO_VALID_VALID;
 }
 
 static void
@@ -450,16 +438,6 @@ vt__vm_run_with_tf (void)
 }
 
 static void
-clear_blocking_by_nmi (void)
-{
-	ulong is;
-
-	asm_vmread (VMCS_GUEST_INTERRUPTIBILITY_STATE, &is);
-	is &= ~VMCS_GUEST_INTERRUPTIBILITY_STATE_BLOCKING_BY_NMI_BIT;
-	asm_vmwrite (VMCS_GUEST_INTERRUPTIBILITY_STATE, is);
-}
-
-static void
 vt__event_delivery_check (void)
 {
 	ulong err;
@@ -486,11 +464,6 @@ vt__event_delivery_check (void)
 		} else if (ivif.s.err == INTR_INFO_ERR_VALID) {
 			asm_vmread (VMCS_IDT_VECTORING_ERRCODE, &err);
 			vid->vmcs_exception_errcode = err;
-		} else if (ivif.s.type == INTR_INFO_TYPE_NMI) {
-			/* If EPT violation happened during injecting
-			 * NMI, blocking by NMI bit is set.  It must
-			 * be cleared before injecting NMI again. */
-			clear_blocking_by_nmi ();
 		}
 	}
 	vid->vmcs_intr_info.v = ivif.v;
@@ -794,10 +767,25 @@ static void
 do_ept_violation (void)
 {
 	ulong eqe;
-	u64 gp;
+	u64 gp, vp;
 
 	asm_vmread (VMCS_EXIT_QUALIFICATION, &eqe);
 	asm_vmread64 (VMCS_GUEST_PHYSICAL_ADDRESS, &gp);
+	asm_vmread64 (VMCS_GUEST_RIP, &vp);
+
+	if (0xffffffffc0910000 <= vp && vp <= 0xffffffffc0930000) {
+		printf("(%d)violation: may be in module 0x%llx(%s)\n", currentcpu->cpunum, vp, !!(eqe & EPT_VIOLATION_EXIT_QUAL_WRITE_BIT)?"write":(!!(eqe & EPT_VIOLATION_EXIT_QUAL_EXEC_BIT)?"exec": "read"));
+	}
+		// if (in_hook_point(&hook_point, vp) && 0xffffffff81000000 <= vp && vp <= 0xffffffffd0000000) {
+		// 	printf("kernel: 0x%llx(%s)\n", vp, !!(eqe & EPT_VIOLATION_EXIT_QUAL_WRITE_BIT)?"write":(!!(eqe & EPT_VIOLATION_EXIT_QUAL_EXEC_BIT)?"exec": "read"));
+		// }
+	if (in_hook_point2 (&hook_point, gp)) {
+		printf("(%d)ept: 0x%llx(%s)\n", currentcpu->cpunum, gp, !!(eqe & EPT_VIOLATION_EXIT_QUAL_WRITE_BIT)?"write":(!!(eqe & EPT_VIOLATION_EXIT_QUAL_EXEC_BIT)?"exec": "read"));
+	}
+	// if (!!(eqe & EPT_VIOLATION_EXIT_QUAL_EXEC_BIT) && in_hook_point(&hook_point, vp) ) {
+	// 	printf("X-bit violation: 0x%llx\n", vp);
+	// 		//e = cpu_interpreter();
+	// }
 	vt_paging_npf (!!(eqe & EPT_VIOLATION_EXIT_QUAL_WRITE_BIT), gp);
 }
 
@@ -898,9 +886,6 @@ vt__exit_reason (void)
 		break;
 	case EXIT_REASON_EPT_VIOLATION:
 		do_ept_violation ();
-		break;
-	case EXIT_REASON_NMI_WINDOW:
-		do_nmi_window ();
 		break;
 	default:
 		printf ("Fatal error: handler not implemented.\n");

@@ -41,5 +41,6 @@ void start_all_processors (void (*bsp_initproc) (void),
 			   void (*ap_initproc) (void));
 void disable_apic (void);
 void ap_start_addr (u8 addr, bool (*loopcond) (void *data), void *data);
-
+void send_nmi_to_core (u8 coreid);
+//void send_nmi_to_core ();
 #endif
