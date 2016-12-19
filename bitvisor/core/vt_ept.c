@@ -66,13 +66,6 @@ struct vt_ept {
 	} cur;
 };
 
-struct vt_exec_hook {
-	virt_t gvirt;
-	u32 size;
-	u64 *mod_areas;
-	u8 available;
-};
-
 struct vt_exec_hook hook_point = { 0, 0, 0, 0 };
 bool nmi_by_host = false;
 
@@ -155,17 +148,7 @@ cur_fill (struct vt_ept *ept, u64 gphys, int level)
 }
 
 bool
-in_hook_point (struct vt_exec_hook* hook, virt_t gvirt)
-{
-	if (hook->available) {
-		//if (hook->gvirt <= gvirt && gvirt <= hook->gvirt + hook->size)
-			return true;
-	}
-	return false;
-}
-
-bool
-in_hook_point2 (struct vt_exec_hook* hook, u64 gphys)
+in_hook_point (struct vt_exec_hook* hook, u64 gphys)
 {
 	u64* m = (u64*)(hook->mod_areas);
 	u32 i;
@@ -191,7 +174,7 @@ vt_ept_map_page_sub (struct vt_ept *ept, bool write, u64 gphys)
 	if (fakerom && write)
 		panic ("EPT: Writing to VMM memory.");
 
-	if (in_hook_point2 (&hook_point, gphys)) {
+	if (in_hook_point (&hook_point, gphys)) {
 		hattr = (cache_get_gmtrr_type (gphys) << EPTE_MT_SHIFT) |
 			EPTE_READ | EPTE_WRITE; // witout EXEC permission
 		printf("remove x-bit from 0x%llx\n", gphys);
@@ -296,7 +279,7 @@ vt_ept_set_hook (u64 gphys, u32 size)
 
 	/* Clearing EPT entries, to hook */
 	vt_ept_clear_all_slow();
-	
+
 	printf("vt_ept_set_hook 0x%llx(%d)\n", gphys, size);
 
 	/* remap address range of kernel module

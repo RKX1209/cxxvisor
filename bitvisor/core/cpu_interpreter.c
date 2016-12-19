@@ -460,7 +460,7 @@ static struct sibbase_info sibmatrix_base[3][2][8] = { /* [mod][rex.b][base] */
 			{ 1, REG_14, SREG_DS },
 			{ 1, REG_15, SREG_DS },
 		},
-	},		
+	},
 	{
 		{
 			{ 4, REG_AX, SREG_DS },
@@ -482,7 +482,7 @@ static struct sibbase_info sibmatrix_base[3][2][8] = { /* [mod][rex.b][base] */
 			{ 4, REG_14, SREG_DS },
 			{ 4, REG_15, SREG_DS },
 		},
-	},		
+	},
 };
 
 static struct sibscale_info sib_scale[2][8] = { /* [rex.x][index] */
@@ -1579,7 +1579,7 @@ opcode_ins (struct op *op)
 		op->optype = OPTYPE_32BIT;
 	if (op->optype == OPTYPE_16BIT)
 		return io_str (op, IOTYPE_INW, 2);
-	else 
+	else
 		return io_str (op, IOTYPE_INL, 4);
 }
 
@@ -2576,6 +2576,7 @@ grp_special:
 	return VMMERR_SUCCESS;
 }
 
+extern u8 interp;
 enum vmmerr
 cpu_interpreter (void)
 {
@@ -2598,6 +2599,10 @@ cpu_interpreter (void)
 	op->ip_off = 0;
 	READ_NEXT_B (op, &code);
 	clear_prefix (&op->prefix);
+	if (interp) {
+		printf("[0x%llx] code=%d\n", op->ip, code);
+	}
+	else {
 	for (;;) {
 		switch (code) {
 		case PREFIX_LOCK:
@@ -2917,4 +2922,5 @@ parse_opcode_0x8f:
 	}
 	op->ip_off += 16;
 	return VMMERR_UNSUPPORTED_OPCODE;
+	}
 }
