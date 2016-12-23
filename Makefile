@@ -6,5 +6,5 @@ bitvisor-release-make: libs-release-make
 	$(MAKE)	-C $(K2ESRC)/bitvisor
 libs-release-make: libs-release-config
 libs-release-config:
-	./configure.sh --compiler g++
+	./configure
 .PHONY config: libs-release-config
