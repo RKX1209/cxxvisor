@@ -20,31 +20,23 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-%ENV_SOURCE%
+pushd /tmp/bareflank/
 
-pushd $BUILD_ABS
-
-if [[ -z "$CUSTOM_LIBCXX_BRANCH" ]]; then
-    branch=$LLVM_RELEASE
-else
-    branch=$CUSTOM_LIBCXX_BRANCH
-fi
-
-if [[ -z "$CUSTOM_LIBCXX_URL" ]]; then
-    url="http://llvm.org/git/libcxx"
-else
-    url=$CUSTOM_LIBCXX_URL
-fi
+rm -Rf nasm-*.tar.bz2
+rm -Rf nasm-*/
+rm -Rf src_nasm
 
 n=0
 until [ $n -ge 5 ]
 do
-    git clone --depth 1 -b $branch $url source_libcxx && break
+    wget -nv $NASM_URL && break
     n=$[$n+1]
     sleep 15
 done
 
-cd source_libcxx
-patch -p1 < $HYPER_ABS/tools/patches/libcxx.patch
+tar xfv nasm-*.tar.bz2
+sleep 1
+mv nasm-*/ src_nasm
+rm nasm-*.tar.bz2
 
 popd

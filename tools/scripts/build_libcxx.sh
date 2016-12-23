@@ -28,13 +28,13 @@ if [[ ! -d "$BUILD_ABS/source_libcxx" ]]; then
     $BUILD_ABS/build_scripts/fetch_libcxx.sh $BUILD_ABS
 fi
 
-# if [[ ! -d "$BUILD_ABS/source_libcxxabi" ]]; then
-#     $BUILD_ABS/build_scripts/fetch_libcxxabi.sh $BUILD_ABS
-# fi
-#
-# if [[ ! -d "$BUILD_ABS/source_llvm" ]]; then
-#     $BUILD_ABS/build_scripts/fetch_llvm.sh $BUILD_ABS
-# fi
+if [[ ! -d "$BUILD_ABS/source_libcxxabi" ]]; then
+    $BUILD_ABS/build_scripts/fetch_libcxxabi.sh $BUILD_ABS
+fi
+
+if [[ ! -d "$BUILD_ABS/source_llvm" ]]; then
+    $BUILD_ABS/build_scripts/fetch_llvm.sh $BUILD_ABS
+fi
 
 mkdir -p $BUILD_ABS/build_libcxx
 
@@ -54,18 +54,18 @@ else
    cxx="x86_64-bareflank-g++"
 fi
 
-# cmake $BUILD_ABS/source_libcxx/ \
-#     -DCMAKE_SYSTEM_NAME=Linux \
-#     -DLLVM_PATH=$BUILD_ABS/source_llvm \
-#     -DLIBCXX_CXX_ABI=libcxxabi \
-#     -DLIBCXX_CXX_ABI_INCLUDE_PATHS=$BUILD_ABS/source_libcxxabi/include \
-#     -DCMAKE_INSTALL_PREFIX=$BUILD_ABS/sysroot/x86_64-elf/ \
-#     -DLIBCXX_SYSROOT=$BUILD_ABS/sysroot/x86_64-elf/ \
-#     -DCMAKE_C_COMPILER=$cc \
-#     -DCMAKE_CXX_COMPILER=$cxx \
-#     -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
-#     -DLIBCXX_HAS_PTHREAD_API=ON \
-#     -DLIBCXX_ENABLE_EXPERIMENTAL_LIBRARY=OFF
-#
-# make -j2
-# make -j2 install
+cmake $BUILD_ABS/source_libcxx/ \
+    -DCMAKE_SYSTEM_NAME=Linux \
+    -DLLVM_PATH=$BUILD_ABS/source_llvm \
+    -DLIBCXX_CXX_ABI=libcxxabi \
+    -DLIBCXX_CXX_ABI_INCLUDE_PATHS=$BUILD_ABS/source_libcxxabi/include \
+    -DCMAKE_INSTALL_PREFIX=$BUILD_ABS/sysroot/x86_64-elf/ \
+    -DLIBCXX_SYSROOT=$BUILD_ABS/sysroot/x86_64-elf/ \
+    -DCMAKE_C_COMPILER=$cc \
+    -DCMAKE_CXX_COMPILER=$cxx \
+    -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
+    -DLIBCXX_HAS_PTHREAD_API=ON \
+    -DLIBCXX_ENABLE_EXPERIMENTAL_LIBRARY=OFF
+
+make -j2
+make -j2 install

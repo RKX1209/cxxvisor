@@ -24,27 +24,25 @@
 
 pushd $BUILD_ABS
 
-if [[ -z "$CUSTOM_LIBCXX_BRANCH" ]]; then
-    branch=$LLVM_RELEASE
-else
-    branch=$CUSTOM_LIBCXX_BRANCH
-fi
-
-if [[ -z "$CUSTOM_LIBCXX_URL" ]]; then
-    url="http://llvm.org/git/libcxx"
-else
-    url=$CUSTOM_LIBCXX_URL
-fi
+echo "Fetching newlib. Please wait..."
 
 n=0
 until [ $n -ge 5 ]
 do
-    git clone --depth 1 -b $branch $url source_libcxx && break
+    wget -nv ftp://sourceware.org/pub/newlib/newlib-2.3.0.20160226.tar.gz && break
     n=$[$n+1]
     sleep 15
 done
 
-cd source_libcxx
-patch -p1 < $HYPER_ABS/tools/patches/libcxx.patch
+tar xf newlib-*.tar.gz
+mv newlib-*/ source_newlib
+rm newlib-*.tar.gz
+
+pushd source_newlib
+patch -p1 < $HYPER_ABS/tools/patches/newlib.patch
+if [[ $compiler == "clang_39" ]] || [[ $compiler == "gcc_"* ]] ; then
+    patch -p1 < $HYPER_ABS/tools/patches/newlib_memcpy_memset.patch
+fi
+popd
 
 popd
