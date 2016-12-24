@@ -22,6 +22,19 @@ create_env() {
     #printf "%s;" "${extensions[@]}" >> $BUILD_ABS/env.sh
     #printf "\"\n" >> $BUILD_ABS/env.sh
   fi
+
+  if [[ ! -f "$HYPER_ABS/Makefile.common" ]]; then
+    echo -e "creating script:$CB Makefile.common$CE"
+    echo "BUILD_ABS=$BUILD_ABS" >> $HYPER_ABS/Makefile.common
+    echo "HYPER_ABS=$HYPER_ABS" >> $HYPER_ABS/Makefile.common
+    #echo "export module_file=\"$module_file\"" >> $BUILD_ABS/Makefile.common
+    #echo "export CFLAGS=\"$CROSS_CCFLAGS\"" >> $BUILD_ABS/Makefile.common
+    #echo "export CXXFLAGS=\"$CROSS_CXXFLAGS\"" >> $BUILD_ABS/Makefile.common
+    #printf "export extensions=\"" >> $BUILD_ABS/Makefile.common
+    #printf "%s;" "${extensions[@]}" >> $BUILD_ABS/Makefile.common
+    #printf "\"\n" >> $BUILD_ABS/Makefile.common
+  fi
+
 }
 
 copy_script() {
@@ -44,10 +57,10 @@ copy_script() {
 copy_scripts() {
   copy_script "bareflank_gcc_wrapper.sh"
   # copy_script "filter_module_file.sh"
-  # copy_script "build_newlib.sh"
+  copy_script "build_newlib.sh"
   copy_script "build_libcxx.sh"
-  # copy_script "build_libcxxabi.sh"
-  # copy_script "build_libbfc.sh"
+  copy_script "build_libcxxabi.sh"
+  copy_script "build_libbfc.sh"
   # copy_script "build_driver.sh"
   # copy_script "load_driver.sh"
   # copy_script "clean_driver.sh"
@@ -94,6 +107,11 @@ create_wrapper_links () {
         ln -s $BUILD_ABS/build_scripts/bareflank_gcc_wrapper.sh $BUILD_ABS/build_scripts/x86_64-bareflank-docker
     fi
 }
+
+create_image() {
+  docker build -t bareflank/$compiler -f tools/dockerfiles/dockerfile_$compiler .
+}
+
 option_run() {
   if [[ -z "$HYPER_ABS" ]]; then
     HYPER_ABS=`pwd`
@@ -111,9 +129,12 @@ option_run() {
     compiler=gcc_610
   fi
 
-  create_env
-  copy_scripts
-  create_wrapper_links
+  if [[ $build_all == "true" ]]; then
+    create_env
+    copy_scripts
+    create_wrapper_links
+    create_image
+  fi
 }
 
 while [[ $# -ne 0 ]]; do
@@ -121,7 +142,9 @@ while [[ $# -ne 0 ]]; do
     option_help
     exit 0
   fi
-
+  if [[ $1 == "-b" ]] || [[ $1 == "--build" ]]; then
+    build_all="true"
+  fi
   if [[ $1 == "--compiler" ]]; then
     shift
     compiler=$1
