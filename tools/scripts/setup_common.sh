@@ -123,7 +123,7 @@ parse_arguments() {
 setup_build_environment() {
     if [[ ! $noconfigure == "true" ]]; then
         pushd $build_dir
-        $hypervisor_dir/configure $compiler
+        $hypervisor_dir/configure --build
         popd
     fi
 

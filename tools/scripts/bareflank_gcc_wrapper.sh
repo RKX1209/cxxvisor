@@ -6,8 +6,6 @@
 # Author: Rian Quinn        <quinnr@ainfosec.com>
 # Author: Brendan Kerrigan  <kerriganb@ainfosec.com>
 #
-# Copyright 2016 Ren Kimura <rkx1209dev@gmail.com>
-#
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
 # License as published by the Free Software Foundation; either
@@ -24,11 +22,9 @@
 
 %ENV_SOURCE%
 
+# ------------------------------------------------------------------------------
 # Docker Setup
 # ------------------------------------------------------------------------------
-# ------------------------------------------------------------------------------
-# COMPILER='docker run  -v /home/rkx/Programming/OSS/hypervisor:/home/rkx/Programming/OSS/hypervisor
-# -v /home/rkx/Programming/OSS/hypervisor:/home/rkx/Programming/OSS/hypervisor -u 1000:1000 --rm -i bareflank/clang_38'
 
 if [[ -f /.dockerenv ]]; then
     HOME=/tmp
@@ -145,8 +141,9 @@ fi
 # ------------------------------------------------------------------------------
 # Mode Flags
 # ------------------------------------------------------------------------------
-/home/rkx/Programming/OSS/hypervisor/makefiles/bfc
 
+for ARG in "$@"
+do
     if [[ $ARG == "-c" ]]; then
         COMPILE_ONLY="yes"
         continue;

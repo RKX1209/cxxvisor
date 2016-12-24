@@ -22,52 +22,39 @@
 
 %ENV_SOURCE%
 
-if [[ ! -d "$BUILD_ABS/source_libcxx" ]]; then
-    $BUILD_ABS/build_scripts/fetch_libcxx.sh $BUILD_ABS
+if [[ -f /.dockerenv ]]; then
+    HOME=/tmp
 fi
 
-if [[ ! -d "$BUILD_ABS/source_libcxxabi" ]]; then
-    $BUILD_ABS/build_scripts/fetch_libcxxabi.sh $BUILD_ABS
+if [[ ! -d "$BUILD_ABS/source_newlib" ]]; then
+    $BUILD_ABS/build_scripts/fetch_newlib.sh $BUILD_ABS
 fi
 
-if [[ ! -d "$BUILD_ABS/source_llvm" ]]; then
-    $BUILD_ABS/build_scripts/fetch_llvm.sh $BUILD_ABS
-fi
+rm -Rf $BUILD_ABS/build_newlib
+rm -Rf $BUILD_ABS/sysroot/x86_64-elf/lib
+rm -Rf $BUILD_ABS/sysroot/x86_64-elf/include/
+mkdir -p $BUILD_ABS/build_newlib
 
-rm -Rf $BUILD_ABS/build_libcxx
-rm -Rf $BUILD_ABS/sysroot/x86_64-elf/include/c++/
-mkdir -p $BUILD_ABS/build_libcxx
+pushd $BUILD_ABS/build_newlib
 
-pushd $BUILD_ABS/build_libcxx
-
-if [[ $PRODUCTION == "yes" ]]; then
-    BUILD_TYPE=Release
-else
-    BUILD_TYPE=Debug
-fi
+export PATH="$HOME/compilers/$compiler/bin:$PATH"
 
 if [[ $compiler == *"clang"* ]]; then
     cc="$BUILD_ABS/build_scripts/x86_64-bareflank-clang"
     cxx="$BUILD_ABS/build_scripts/x86_64-bareflank-clang++"
+    ar="$BUILD_ABS/build_scripts/x86_64-bareflank-ar"
 else
     cc="$BUILD_ABS/build_scripts/x86_64-bareflank-gcc"
     cxx="$BUILD_ABS/build_scripts/x86_64-bareflank-g++"
+    ar="$BUILD_ABS/build_scripts/x86_64-bareflank-ar"
 fi
 
-cmake $BUILD_ABS/source_libcxx/ \
-    -DCMAKE_SYSTEM_NAME=Linux \
-    -DLLVM_PATH=$BUILD_ABS/source_llvm \
-    -DLIBCXX_CXX_ABI=libcxxabi \
-    -DLIBCXX_CXX_ABI_INCLUDE_PATHS=$BUILD_ABS/source_libcxxabi/include \
-    -DCMAKE_INSTALL_PREFIX=$BUILD_ABS/sysroot/x86_64-elf/ \
-    -DLIBCXX_SYSROOT=$BUILD_ABS/sysroot/x86_64-elf/ \
-    -DCMAKE_C_COMPILER=$cc \
-    -DCMAKE_CXX_COMPILER=$cxx \
-    -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
-    -DLIBCXX_HAS_PTHREAD_API=ON \
-    -DLIBCXX_ENABLE_EXPERIMENTAL_LIBRARY=OFF
+echo "Building newlib. Please wait..."
+../source_newlib/configure --target=x86_64-elf --disable-libgloss AR_FOR_TARGET="$ar" CC_FOR_TARGET="$cc" CXX_FOR_TARGET="$cxx" CFLAGS_FOR_TARGET="$CFLAGS" CXXFLAGS_FOR_TARGET="$CXXFLAGS" --prefix=$BUILD_ABS/sysroot/ 1>/dev/null 2>/dev/null
+make -j2 1>/dev/null 2>/dev/null
+make -j2 install 1>/dev/null 2>/dev/null
 
-make -j2
-make -j2 install
+$BUILD_ABS/build_scripts/x86_64-bareflank-clang -shared `find $BUILD_ABS/build_newlib/x86_64-elf/newlib/libc -name "*.o" | xargs echo` -o libc.so
+mv libc.so $BUILD_ABS/sysroot/x86_64-elf/lib/
 
 popd
