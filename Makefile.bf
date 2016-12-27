@@ -2,7 +2,7 @@ MAKE = make
 
 .PHONY: all
 
-all: bfc-make bfcxx-make bfcrt-make
+all: bfc-make bfcxx-make bfcrt-make bfunwind-make
 
 %-make:
 	$(MAKE) -C $(BUILD_ABS)/makefiles/$*
