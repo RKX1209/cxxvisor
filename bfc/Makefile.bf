@@ -23,8 +23,6 @@
 # Custom Targets
 ################################################################################
 
-include ../Makefile.common
-
 .PHONY: clean
 .PHONY: clean_src
 .PHONY: clean_tests
