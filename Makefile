@@ -6,7 +6,7 @@ MAKE = make
 all: all-release
 all-release: bitvisor-make libs-release-make
 
-libs-release-make: bfc-make #bfcxx-make #libs-release-config
+libs-release-make: bfc-make bfcxx-make #libs-release-config
 
 libs-release-config:
 	./configure
