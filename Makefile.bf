@@ -9,7 +9,7 @@ all: bfc-make bfcxx-make bfcrt-make
 
 .PHONY: clean
 clean:
-	#rm -r libs/
-	rm -r libs/build_scripts
-	rm -r libs/makefiles
-	rm -f libs/env.sh
+	#rm -r $(BUILD_ABS)/
+	rm -r $(BUILD_ABS)/build_scripts
+	rm -r $(BUILD_ABS)/makefiles
+	rm -f $(BUILD_ABS)/env.sh
