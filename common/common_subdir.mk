@@ -92,9 +92,9 @@ Makefile: $(HYPER_REL)/Makefile.bf
 
 all:
 	@$(MAKE) --no-print-directory build_src
-ifeq ($(shell uname -s), Linux)
-	@$(MAKE) --no-print-directory build_tests
-endif
+# ifeq ($(shell uname -s), Linux)
+# 	@$(MAKE) --no-print-directory build_tests
+# endif
 
 build_src:
 	@for dir in $(BUILD_SRC_DIRS); do \
