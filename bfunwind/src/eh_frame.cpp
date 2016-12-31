@@ -24,6 +24,31 @@
 #include <abort.h>
 #include <dwarf4.h>
 #include <eh_frame.h>
+#include <constants.h>
+#include <eh_frame_list.h>
+
+auto g_eh_frame_list_num = 0ULL;
+eh_frame_t g_eh_frame_list[MAX_NUM_MODULES] = {};
+
+extern "C" struct eh_frame_t *
+get_eh_frame_list() noexcept
+{ return g_eh_frame_list; }
+
+extern "C" int64_t
+register_eh_frame(void *addr, uint64_t size) noexcept
+{
+  if (addr == nullptr || size == 0)
+    return REGISTER_EH_FRAME_SUCCESS;
+
+  if (g_eh_frame_list_num >= MAX_NUM_MODULES)
+    return REGISTER_EH_FRAME_FAILURE;
+
+  g_eh_frame_list[g_eh_frame_list_num].addr = addr;
+  g_eh_frame_list[g_eh_frame_list_num].size = size;
+  g_eh_frame_list_num++;
+
+  return REGISTER_EH_FRAME_SUCCESS;
+}
 
 // -----------------------------------------------------------------------------
 // Helpers
