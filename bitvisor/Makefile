@@ -30,10 +30,13 @@ process-depends-$(CONFIG_IDMAN) += $(dir)idman/$(outo_p)
 process-depends-$(CONFIG_STORAGE) += $(dir)storage/$(outo_p)
 process-depends-$(CONFIG_VPN) += $(dir)vpn/$(outo_p)
 
+
 $(dir)$(elf) : $(defouto) $(dir)$(lds)
 	$(V-info) LD $(dir)$(elf)
-	$(CC) $(LDFLAGS) -Wl,-T,$(dir)$(lds) -Wl,--cref \
-		-Wl,-Map,$(dir)$(map) -o $(dir)$(elf) $(defouto)
+	$(CC) $(LDFLAGS) -L../libs/makefiles/bfcrt/bin/cross/ -L../libs/makefiles/bfunwind/bin/cross/ -L../libs/sysroot/x86_64-elf/lib/ \
+		-Wl,-T,$(dir)$(lds) -Wl,--cref \
+		-Wl,-Map,$(dir)$(map) -o $(dir)$(elf) $(defouto) \
+		-static -lbfcrt_static -lbfunwind_static -lc++abi -Wl,-u__errno -lc -lbfc -lc++
 	$(OBJCOPY) --output-format $(FORMAT) $(dir)$(elf)
 
 .PHONY : build-all

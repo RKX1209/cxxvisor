@@ -46,5 +46,6 @@ done
 
 cd source_libcxx
 patch -p1 < $HYPER_ABS/tools/patches/libcxx.patch
+patch -p1 < $HYPER_ABS/tools/patches/libcxx_static.patch
 
 popd
