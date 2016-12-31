@@ -34,7 +34,7 @@ pushd $BUILD_ABS/build_libbfc
 cp -Rf $BUILD_ABS/source_libbfc/sysctl.h $BUILD_ABS/sysroot/x86_64-elf/include/sys/
 cp -Rf $BUILD_ABS/source_libbfc/pthread.h $BUILD_ABS/sysroot/x86_64-elf/include/
 
-flags="-DSYM_PROVIDED__WRITE -DSYM_PROVIDED__MALLOC -DSYM_PROVIDED__FREE -DSYM_PROVIDED__CALLOC -DSYM_PROVIDED__FSTAT -DSYM_PROVIDED__REALLOC -DLOOKUP_TLS_DATA"
+flags="-DSYM_PROVIDED__MALLOC -DSYM_PROVIDED__FREE -DSYM_PROVIDED__CALLOC -DSYM_PROVIDED__FSTAT -DSYM_PROVIDED__REALLOC -DLOOKUP_TLS_DATA"
 
 if [[ $compiler == *"clang"* ]]; then
     cc="$BUILD_ABS/build_scripts/x86_64-bareflank-clang $flags"
@@ -49,6 +49,8 @@ fi
 $cc $CFLAGS -c $BUILD_ABS/source_libbfc/*.c
 $cxx $CXXFLAGS -c $BUILD_ABS/source_libbfc/*.cpp
 $BUILD_ABS/build_scripts/x86_64-bareflank-clang -shared *.o -o libbfc.so
+$BUILD_ABS/build_scripts/x86_64-bareflank-ar qc libbfc.a *.o
+mv libbfc.a $BUILD_ABS/sysroot/x86_64-elf/lib/
 mv libbfc.so $BUILD_ABS/sysroot/x86_64-elf/lib/
 
 popd

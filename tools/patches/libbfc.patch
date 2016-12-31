@@ -1,0 +1,37 @@
+diff --git a/bfc.c b/bfc.c
+index d12d85f..9558d42 100644
+--- a/bfc.c
++++ b/bfc.c
+@@ -37,9 +37,6 @@
+         const char *str_text = "\033[1;33mWARNING\033[0m: unsupported libc function called = "; \
+         const char *str_func = __PRETTY_FUNCTION__; \
+         const char *str_endl = "\n"; \
+-        write(0, str_text, strlen(str_text)); \
+-        write(0, str_func, strlen(str_func)); \
+-        write(0, str_endl, strlen(str_endl)); \
+     }
+ 
+ // Supported Symbols
+@@ -553,22 +550,10 @@ malloc(size_t size)
+     return _malloc_r(0, size);
+ }
+ 
+-void
+-free(void *ptr)
+-{
+-    _free_r(0, ptr);
+-}
+-
+ void *
+ calloc(size_t nmemb, size_t size)
+ {
+     return _calloc_r(0, nmemb, size);
+ }
+ 
+-void *
+-realloc(void *ptr, size_t size)
+-{
+-    return _realloc_r(0, ptr, size);
+-}
+-
+ #endif

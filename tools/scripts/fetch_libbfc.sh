@@ -1,4 +1,4 @@
-#!/bin/bash -e
+#!/bin/bash -x
 #
 # Bareflank Hypervisor
 #
@@ -31,5 +31,8 @@ do
     n=$[$n+1]
     sleep 15
 done
+
+cd source_libbfc
+patch -p1 < $HYPER_ABS/tools/patches/libbfc.patch
 
 popd
