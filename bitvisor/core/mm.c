@@ -1953,7 +1953,7 @@ pmap_read (pmap_t *m)
 		}
 	}
 	return m->entry[m->curlevel];
-}	
+}
 
 bool
 pmap_write (pmap_t *m, u64 e, uint attrmask)
@@ -2386,6 +2386,30 @@ mm_flush_wb_cache (void)
 		      : "=a" (tmp), "=c" (tmp), "=S" (tmp)
 		      : "S" (VMM_START_VIRT), "c" (VMMSIZE_ALL / 4));
 	asm_wbinvd ();		/* write back all caches */
+}
+
+/* malloc and friends for C++ libraries */
+void *
+_malloc_r(struct _reent *r, size_t size)
+{ return alloc(size); }
+
+void
+_free_r(struct _reent *r, void *ptr)
+{ free(ptr); }
+
+void *
+_calloc_r(struct _reent *r, size_t nmemb, size_t size)
+{
+	void *ptr;
+  if (ptr = alloc(nmemb * size))
+  	return memset(ptr, 0, nmemb * size);
+  return NULL;
+}
+
+void *
+_realloc_r(struct _reent *r, void *ptr, size_t size)
+{
+	return realloc(ptr, size);
 }
 
 INITFUNC ("global2", mm_init_global);
