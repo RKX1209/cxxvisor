@@ -35,3 +35,36 @@ index d12d85f..9558d42 100644
 -}
 -
  #endif
+diff --git a/pthread.cpp b/pthread.cpp
+index efe9471..58e4f30 100644
+--- a/pthread.cpp
++++ b/pthread.cpp
+@@ -335,11 +335,12 @@ pthread_getspecific(pthread_key_t key)
+     if (key > MAX_THREAD_SPECIFIC_DATA)
+         return nullptr;
+ 
+-#ifdef LOOKUP_TLS_DATA
++/*#ifdef LOOKUP_TLS_DATA
+     auto threadSpecificData = (void **)thread_context_tlsptr();
+ #endif
+ 
+-    return threadSpecificData[key];
++    return threadSpecificData[key]; */
++    return 0;
+ }
+ 
+ extern "C" int
+@@ -635,11 +636,11 @@ pthread_setspecific(pthread_key_t key, const void *data)
+     if (key > MAX_THREAD_SPECIFIC_DATA)
+         return -EINVAL;
+ 
+-#ifdef LOOKUP_TLS_DATA
++/*#ifdef LOOKUP_TLS_DATA
+     auto threadSpecificData = (void **)thread_context_tlsptr();
+ #endif
+ 
+-    threadSpecificData[key] = (void *)data;
++    threadSpecificData[key] = (void *)data; */
+     return 0;
+ }
+ 
