@@ -7,6 +7,7 @@ class Plugin;
 class PluginsFactory;
 class CorePlugin;
 class Annotation;
+class K2EExecutor;
 
 class K2E
 {
@@ -15,13 +16,16 @@ protected:
 
   CorePlugin* m_corePlugin;
   Annotation* m_annotation;
+  K2EExecutor* m_k2eExecutor;
 
 public:
   K2E();
   void init();
-  void initPlugins();  
+  void initPlugins();
+  void initExecutor();  
   /** Get Core plugin */
   inline CorePlugin* getCorePlugin() const { return m_corePlugin; }
+  K2EExecutor* getExecutor() { return m_k2eExecutor; }
 };
 
 }

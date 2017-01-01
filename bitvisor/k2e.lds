@@ -20,6 +20,11 @@ SECTIONS {
 		*(.text)
 		codeend = .;
 	}
+	.eh_frame : {
+		__eh_frame_start = .;
+		*(.eh_frame)
+		__eh_frame_end = .;
+	}	
 	.data : AT (phys + (data - head)) {
 		data = .;
 		*(.data)

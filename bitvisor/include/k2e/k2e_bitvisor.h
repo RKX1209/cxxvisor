@@ -17,6 +17,7 @@ extern "C" {
 extern struct K2E* g_k2e;
 
 struct K2E* k2e_initialize();
+void cxx_initialize();
 void k2e_initplugins();
 
 void k2e_on_module_load(struct K2E* k2e, struct ModuleDescriptor *module);

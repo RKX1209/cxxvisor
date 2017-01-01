@@ -483,7 +483,12 @@ static void
 k2e_init (void)
 {
 	g_k2e = k2e_initialize();
-	k2e_initplugins();
+}
+
+static void
+cxx_init (void)
+{
+	cxx_initialize();
 }
 
 asmlinkage void
@@ -504,4 +509,5 @@ INITFUNC ("bsp0", debug_on_shift_key);
 INITFUNC ("global1", print_boot_msg);
 INITFUNC ("global3", copy_minios);
 INITFUNC ("global3", get_shiftflags);
+INITFUNC ("vmmcal1", cxx_init);
 INITFUNC ("vmmcal1", k2e_init);
