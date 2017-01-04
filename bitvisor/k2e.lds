@@ -24,7 +24,17 @@ SECTIONS {
 		__eh_frame_start = .;
 		*(.eh_frame)
 		__eh_frame_end = .;
-	}	
+	}
+	.init_array : {
+		__init_array_start = .;
+		*(.init_array)
+		__init_array_end = .;
+	}
+	.fini_array : {
+		__fini_array_start = .;
+		*(.fini_array)
+		__fini_array_end = .;
+	}
 	.data : AT (phys + (data - head)) {
 		data = .;
 		*(.data)

@@ -5,11 +5,18 @@
 #include <k2e/k2e_bitvisor.h>
 #include <k2e/K2EExecutor.hpp>
 #include <eh_frame_list.h>
+#include <crt.h>
 extern "C" {
 #include <core/printf.h>
 }
-extern void* __eh_frame_start;
-extern void* __eh_frame_end;
+extern u64 __eh_frame_start;
+extern u64 __eh_frame_end;
+extern u64 __init_array_start;
+extern u64 __init_array_end;
+extern u64 __fini_array_start;
+extern u64 __fini_array_end;
+extern u64 dataend;
+extern u64 bss;
 
 namespace k2e {
 void gg(char *buf) { printf("%s\n",buf); throw "gg error"; }
@@ -20,13 +27,14 @@ K2E::K2E()
   PluginsFactory::registerPlugin(&CorePlugin::s_pluginInfo);
   m_corePlugin = static_cast<CorePlugin*>(
                 m_pluginsFactory->createPlugin(this, "CorePlugin"));
+  printf("dataend=%p bss=%p\n", &dataend, &bss);
   printf("K2E::init() fact = %p core = %p\n", m_pluginsFactory, m_corePlugin);
   char *buf = "from k2e::k2e()";
-  try {
-    ff(buf);
-  }catch (char *hoge) {
-    printf("Error: %s\n", hoge);
-  }
+  // try {
+  //   ff(buf);
+  // }catch (char *hoge) {
+  //   printf("Error: %s\n", hoge);
+  // }
 
 }
 
@@ -50,7 +58,18 @@ void K2E::initExecutor()
 
 static void __cxx_initialize()
 {
-  register_eh_frame(__eh_frame_start, (u64)__eh_frame_end - (u64)__eh_frame_start);
+  struct section_info_t sec_info = {0};
+
+  sec_info.eh_frame_addr = &__eh_frame_start;
+  sec_info.eh_frame_size = (u64)&__eh_frame_end - (u64)&__eh_frame_start;
+
+  sec_info.init_array_addr = &__init_array_start;
+  sec_info.init_array_size = (u64)&__init_array_end - (u64)&__init_array_start;
+
+  sec_info.fini_array_addr = &__fini_array_start;
+  sec_info.fini_array_size = (u64)&__fini_array_end - (u64)&__fini_array_start;
+
+  local_init(&sec_info);
 }
 
 extern "C" {
