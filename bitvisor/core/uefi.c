@@ -144,7 +144,8 @@ uefi_init (u32 loadaddr, u32 loadsize, EFI_SYSTEM_TABLE *systab,
 	ulong alloc_addr;
 	u32 vmmsize, align, ret, loadedsize, blocksize, npages;
 	int freesize;
-	extern u8 dataend[];
+	//extern u8 dataend[];
+	extern u8 bss[];
 	EFI_SIMPLE_TEXT_IN_PROTOCOL *conin;
 	EFI_SIMPLE_TEXT_OUT_PROTOCOL *conout;
 
@@ -206,10 +207,10 @@ uefi_init (u32 loadaddr, u32 loadsize, EFI_SYSTEM_TABLE *systab,
 	uefi_entry_pcpy ((u8 *)alloc_addr + 0x100000, (u8 *)(ulong)loadaddr,
 			 loadsize);
 	loadedsize = loadsize;
-	blocksize = (((dataend - head) / 64 + 511) / 512) * 512;
+	blocksize = (((bss - head) / 64 + 511) / 512) * 512;
 	do {
 		_putchar ('.');
-		readsize = dataend - head - loadedsize;
+		readsize = bss - head - loadedsize;
 		if (readsize > blocksize)
 			readsize = blocksize;
 		ret = uefi_entry_call (uefi_read, 0, file,
@@ -221,9 +222,9 @@ uefi_init (u32 loadaddr, u32 loadsize, EFI_SYSTEM_TABLE *systab,
 			return 0;
 		}
 		loadedsize += readsize;
-	} while (dataend - head > loadedsize && readsize > 0);
+	} while (bss - head > loadedsize && readsize > 0);
 	_PRINT ("\n");
-	if (dataend - head > loadedsize) {
+	if (bss - head > loadedsize) {
 		_PRINT ("Load failed\n");
 		return 0;
 	}
