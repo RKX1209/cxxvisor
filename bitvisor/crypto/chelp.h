@@ -126,6 +126,9 @@
 #define	CHELP_WHERE_P		printf("[CHELP_WHERE_P] %s: %u\n", __FILE__, __LINE__);
 
 #ifdef	CHELP_OPENSSL_SOURCE
+#include <stdlib.h>
+#include <stdio.h>
+#if 0
 // OpenSSL ソースコードのコンパイルのために必要な定義
 #ifndef	_WIN64
 #ifndef	__CORE_TYPES_H
@@ -245,32 +248,36 @@ struct tm
 #define	isupper				chelp_isupper
 #define	islower				chelp_islower
 
+#endif
 
-
+#define	assert(a)
 #define OPENSSL_NO_STDIO
 #define OPENSSL_DISABLE_OLD_DES_SUPPORT
 #define TERMIO
 #define DECLARE_PEM_write_fp_const DECLARE_PEM_write_fp
-#define BUFSIZ 512
+#undef stderr
+#define stderr NULL
+#define double long
+
+static inline void *
+BIO_new_file (const char *filename, const char *mode)
+{
+	return NULL;
+}
+
+#if 0
 #define malloc chelp_malloc
 #define realloc chelp_realloc
 #define free chelp_free
-#define stderr NULL
 #define vfprintf BIO_printf
 #define abort chelp_abort
-#define double long
+
 #define printf chelp_printf
 
 void chelp_abort (void);
 
 static inline char *
 getenv (const char *name)
-{
-	return NULL;
-}
-
-static inline void *
-BIO_new_file (const char *filename, const char *mode)
 {
 	return NULL;
 }
@@ -311,6 +318,7 @@ atoi (const char *nptr)
 	else
 		return r;
 }
+#endif
 #endif	// CHELP_OPENSSL_SOURCE
 
 // chelp.c
