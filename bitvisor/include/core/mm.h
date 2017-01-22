@@ -48,7 +48,7 @@ void free_page_phys (phys_t phys);
 void *alloc (uint len);
 void *alloc2 (uint len, u64 *phys);
 u32 alloc_realmodemem (uint len);
-void *realloc (void *virt, uint len);
+//void *realloc (void *virt, uint len);
 void free (void *virt);
 struct mempool *mempool_new (int blocksize, int numkeeps, bool clear);
 void mempool_free (struct mempool *mp);

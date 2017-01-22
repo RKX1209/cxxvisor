@@ -37,7 +37,7 @@ $(dir)$(elf) : $(defouto) $(dir)$(lds)
 	$(CC) $(LDFLAGS) -L../libs/makefiles/bfcrt/bin/cross/ -L../libs/makefiles/bfunwind/bin/cross/ -L../libs/sysroot/x86_64-elf/lib/ \
 		-Wl,-T,$(dir)$(lds) -Wl,--cref \
 		-Wl,-Map,$(dir)$(map) -o $(dir)$(elf) $(defouto) \
-		-static -lbfcrt_static -lbfunwind_static -lc++abi -Wl,-u__errno -lc -lbfc -lc++
+		-static -lbfcrt_static -lbfunwind_static -lc++abi -Wl,-u__errno -lc -lbfc -lc++ -lc -lbfc
 	$(OBJCOPY) --output-format $(FORMAT) $(dir)$(elf)
 
 .PHONY : build-all

@@ -52,6 +52,7 @@ int ps2_locked = 0;
 static void
 iccard (void)
 {
+#if 0
 	if (iccard_status == IS_NOCARD && shutdowntime >= 3) {
 		guest_status = IS_NOCARD;
 		current->vmctl.write_general_reg (GENERAL_REG_RAX, 1);
@@ -59,11 +60,13 @@ iccard (void)
 		guest_status = IS_OK;
 		current->vmctl.write_general_reg (GENERAL_REG_RAX, 0);
 	}
+#endif
 }
 
 static void
 iccard_timer (void *handle, void *data)
 {
+#if 0
 	int r;
 	unsigned long idman_session;
 
@@ -114,11 +117,13 @@ iccard_timer (void *handle, void *data)
 #endif
 	}
 	timer_set (handle, 1000000);
+#endif
 }
 
 static void
 vmmcall_iccard_init (void)
 {
+#if 0
 	void *handle;
 
 	if (!config.vmm.iccard.status)
@@ -129,7 +134,8 @@ vmmcall_iccard_init (void)
 	handle = timer_new (iccard_timer, NULL);
 	ASSERT (handle);
 	timer_set (handle, 1000000);
+#endif
 }
 
-INITFUNC ("driver5", vmmcall_iccard_init);
+//INITFUNC ("driver5", vmmcall_iccard_init);
 #endif

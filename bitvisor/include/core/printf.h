@@ -30,8 +30,9 @@
 #ifndef __CORE_PRINTF_H
 #define __CORE_PRINTF_H
 
-#include <core/stdarg.h>
-#include <core/types.h>
+#include <stddef.h>
+#include <stdarg.h>
+#include <types.h>
 
 int printf (const char *format, ...)
 	__attribute__ ((format (printf, 1, 2)));
