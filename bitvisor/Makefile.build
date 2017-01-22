@@ -9,12 +9,21 @@ backtrace-1 = -fno-omit-frame-pointer
 backtrace = $(backtrace-$(CONFIG_BACKTRACE))
 bits-0 = 32
 bits-1 = 64
-CFLAGS = -m$(bits-$(CONFIG_64)) -mno-red-zone -mno-sse -nostdinc -g -O \
+
+CFLAGS = -isystem $(k2e)/libs/sysroot/x86_64-elf/include/c++/v1 -isystem $(k2e)/libs/sysroot/x86_64-elf/include -isystem $(k2e)/libgcc/include \
+-m$(bits-$(CONFIG_64)) -mno-red-zone -mno-sse -nostdinc -g -O \
 -ffreestanding -fno-builtin -fno-stack-protector $(backtrace) \
--fno-strict-aliasing -Wall $(CONSTANTS-1) -I$(DIR) -Iinclude -I../include
-CXXFLAGS = -m$(bits-$(CONFIG_64)) -mno-red-zone -mno-sse -nostdinc -g -O \
--ffreestanding -fno-builtin -fno-rtti -fno-stack-protector $(backtrace) \
--fno-strict-aliasing -std=gnu++14 -Wall $(CONSTANTS-1) -I$(DIR) -Iinclude -I../include
+-fno-strict-aliasing -Wall $(CONSTANTS-1) -I$(k2e)/bitvisor/$(DIR) -I$(k2e)/include -I$(k2e)/bitvisor/include
+CXXFLAGS = -isystem $(k2e)/libs/sysroot/x86_64-elf/include/c++/v1 -isystem $(k2e)/libs/sysroot/x86_64-elf/include -isystem $(k2e)/libgcc/include \
+-g -m$(bits-$(CONFIG_64)) -fexceptions -mstackrealign -mmmx -msse -msse2 -msse3 -mssse3 -msse4.1 -msse4.2 -msse4 -mavx -maes \
+-ffreestanding -fno-stack-protector -mno-red-zone \
+-D_HAVE_LONG_DOUBLE -D_LDBL_EQ_DBL -D_POSIX_TIMERS -U__STRICT_ANSI__ -DMALLOC_PROVIDED -DCLOCK_MONOTONIC \
+-std=gnu++14 -fno-use-cxa-atexit -nostdinc -nostdinc++ -nodefaultlibs \
+-fno-strict-aliasing -I$(k2e)/bitvisor/$(DIR) -I$(k2e)/include -I$(k2e)/bitvisor/include
+
+#CC = $(k2e)/libs/build_scripts/x86_64-bareflank-gcc
+#CXX = $(k2e)/libs/build_scripts/x86_64-bareflank-g++
+
 ASFLAGS = -m$(bits-$(CONFIG_64)) -g -Wa,-I,$(DIR) -Wa,--divide
 LDFLAGS = -m$(bits-$(CONFIG_64)) -g -nostdlib -Wl,--build-id=none
 outo_p = $(outo)_p
@@ -61,7 +70,7 @@ boptions-data := bobjs=$(bobjs) blibs=$(blibs-1) bstacksize=$(bstacksize-1)
 
 $(defouto) : $(objs) $(dir)$(depends) $(dir)$(objects)
 	$(V-info) LD $(defouto)
-	$(CC) $(LDFLAGS) -Wl,-r -o $(defouto) $(objs)
+	$(CC) $(LDFLAGS) -Wl,-r -o $(k2e)/bitvisor/$(defouto) $(objs)
 
 $(defouta) : $(objs) $(dir)$(depends)
 	$(V-info) AR $(defouta)
@@ -143,14 +152,14 @@ $(subouto_p) $(subouta_p) $(suboutp_p) :
 
 .c.o :
 	$(V-info) CC $@
-	$(CC) $(CFLAGS) -MD -c -o $@ $< && \
+	$(CC) $(CFLAGS) -MD -c -o $(k2e)/bitvisor/$@ $(k2e)/bitvisor/$< && \
 $(SED) -n -e 's/.*: *//' -e '/^ *$$/d' -e :a -e '/\\$$/{N' -e ba -e '}' \
 -e 's/$$/ :/' -e H -e '$${x' -e p -e q -e '}' < $(@:.o=).d >> $(@:.o=).d || \
 { $(RM) $@; false; }
 
 .s.o :
 	$(V-info) CC $@
-	$(CC) $(ASFLAGS) -c -o $@ $< && \
+	$(CC) $(ASFLAGS) -c -o $(k2e)/bitvisor/$@ $(k2e)/bitvisor/$< && \
 $(SED) -n -e '1{x' -e 's=^=$@ :>=' -e x -e '}' -e 's/#.*//' \
 -e '/\.include ".*"/{s=.*\.include "\([^"]*\)".*=<$(@D)/\1>=' -e H -e '}' \
 -e '$${x' -e 's/>.</ /g' -e 's/>$$//p' -e 's/.*: *//' \
@@ -158,7 +167,7 @@ $(SED) -n -e '1{x' -e 's=^=$@ :>=' -e x -e '}' -e 's/#.*//' \
 
 .cpp.o :
 	$(V-info) CXX $@
-	$(CXX) $(CXXFLAGS) -c -o $@ $<
+	$(CXX) $(CXXFLAGS) -c -o $(k2e)/bitvisor/$@ $(k2e)/bitvisor/$<
 
 # include
 include $(dir)$(depends)
