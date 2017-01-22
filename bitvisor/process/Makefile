@@ -1,4 +1,4 @@
-CFLAGS += -Iprocess/lib
+CFLAGS += -I$(k2e)/bitvisor/process/lib
 
 bins-1 += debug help init log panic recvexample sendexample sendint
 bins-1 += serialtest shell

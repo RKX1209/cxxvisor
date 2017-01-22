@@ -14,6 +14,7 @@ elf    = $(NAME).elf
 map    = $(NAME).map
 lds    = $(NAME).lds
 target = $(elf)
+k2e    = $(realpath $(dir)../)
 
 subdirs-1 += core drivers
 subdirs-$(CONFIG_STORAGE) += storage
@@ -43,12 +44,12 @@ $(dir)$(elf) : $(defouto) $(dir)$(lds)
 build-all : $(CONFIG) defconfig
 	case "`$(SED) 1q $(DIR)/$(depends) 2>/dev/null`" in \
 	''): >> $(DIR)/$(depends);; esac
-	$(MAKE) $(V-makeopt-$(V)) -f Makefile.build build-dir DIR=$(DIR) V=$(V)
+	$(MAKE) $(V-makeopt-$(V)) -f Makefile.build build-dir k2e=$(k2e) DIR=$(DIR) V=$(V)
 	$(SIZE) $(dir)$(elf)
 
 .PHONY : clean-all
 clean-all :
-	$(MAKE) $(V-makeopt-$(V)) -f Makefile.clean clean-dir DIR=$(DIR) V=$(V)
+	$(MAKE) $(V-makeopt-$(V)) -f Makefile.clean clean-dir k2e=$(k2e) DIR=$(DIR) V=$(V)
 
 .PHONY : config
 config : $(CONFIG)
@@ -62,3 +63,4 @@ defconfig :
 	cp defconfig.tmpl defconfig
 
 $(dir)process/$(outp_p) : $(process-depends-1)
+# DO NOT DELETE

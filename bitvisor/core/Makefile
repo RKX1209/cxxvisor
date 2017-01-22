@@ -36,9 +36,9 @@ CONSTANTS-$(CONFIG_MAP_UEFI_MMIO) += -DMAP_UEFI_MMIO
 
 CONSTANTS-1 += -DUSE_PAE
 
-CFLAGS += -Ivpn/lib
-CFLAGS += -Iedk/Foundation/Efi/Include/ -Iedk/Foundation/Framework/Include/
-CFLAGS += -Iedk/Foundation/Include/ -Iedk/Foundation/Efi/
+CFLAGS += -I$(k2e)/bitvisor/vpn/lib
+CFLAGS += -I$(k2e)/bitvisor/edk/Foundation/Efi/Include/ -I$(k2e)/bitvisor/edk/Foundation/Framework/Include/
+CFLAGS += -I$(k2e)/bitvisor/edk/Foundation/Include/ -I$(k2e)/bitvisor/edk/Foundation/Efi/
 
 objs-1 += acpi.o acpi_dsdt.o ap.o assert.o beep.o cache.o callrealmode.o
 objs-1 += calluefi.o config.o cpu.o cpu_emul.o cpu_interpreter.o cpu_mmu.o

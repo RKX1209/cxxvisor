@@ -1,8 +1,8 @@
-CFLAGS += -Icrypto -Icrypto/openssl-$(OPENSSL_VERSION)/include
-CFLAGS += -Icrypto/openssl-$(OPENSSL_VERSION)
-CFLAGS += -Icrypto/openssl-$(OPENSSL_VERSION)/crypto
-CFLAGS += -Icrypto/openssl-$(OPENSSL_VERSION)/crypto/asn1
-CFLAGS += -Icrypto/openssl-$(OPENSSL_VERSION)/crypto/evp
+CFLAGS += -I$(k2e)/bitvisor/crypto -I$(k2e)/bitvisor/crypto/openssl-$(OPENSSL_VERSION)/include
+CFLAGS += -I$(k2e)/bitvisor/crypto/openssl-$(OPENSSL_VERSION)
+CFLAGS += -I$(k2e)/bitvisor/crypto/openssl-$(OPENSSL_VERSION)/crypto
+CFLAGS += -I$(k2e)/bitvisor/crypto/openssl-$(OPENSSL_VERSION)/crypto/asn1
+CFLAGS += -I$(k2e)/bitvisor/crypto/openssl-$(OPENSSL_VERSION)/crypto/evp
 CFLAGS += -DCHELP_OPENSSL_SOURCE -include chelp.h
 
 objs-1 += openssl-$(OPENSSL_VERSION)/crypto/asn1/a_bitstr.o

@@ -1,8 +1,8 @@
 LWIP_VERSION=1.4.1
 
-CFLAGS += -I$(DIR)/include -I$(DIR)/include/arch -I$(DIR)/include/lwip \
-	-I$(DIR)/lwip-$(LWIP_VERSION)/src/include \
-	-I$(DIR)/lwip-$(LWIP_VERSION)/src/include/ipv4 \
+CFLAGS += -I$(k2e)/bitvisor/$(DIR)/include -I$(k2e)/bitvisor/$(DIR)/include/arch -I$(k2e)/bitvisor/$(DIR)/include/lwip \
+	-I$(k2e)/bitvisor/$(DIR)/lwip-$(LWIP_VERSION)/src/include \
+	-I$(k2e)/bitvisor/$(DIR)/lwip-$(LWIP_VERSION)/src/include/ipv4 \
 
 objs-1 += lwip-$(LWIP_VERSION)/src/core/def.o
 objs-1 += lwip-$(LWIP_VERSION)/src/core/dhcp.o
