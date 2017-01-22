@@ -121,6 +121,7 @@ if [[ $0 == *"docker" ]]; then
         COMPILER="eval"
     else
         COMPILER="docker run $DOCKER_ARGS"
+	echo $COMPILER
     fi
 
     $COMPILER $@
@@ -374,12 +375,12 @@ if [[ -d "$HOME/compilers/$compiler/x86_64-elf/include/" ]]; then
     SYSROOT_INC_PATH="$SYSROOT_INC_PATH -isystem $HOME/compilers/$compiler/x86_64-elf/include/"
 fi
 
-if [[ -d "$BUILD_ABS/sysroot/x86_64-elf/include/" ]]; then
-    SYSROOT_INC_PATH="$SYSROOT_INC_PATH -isystem $BUILD_ABS/sysroot/x86_64-elf/include/"
-fi
-
 if [[ -d "$BUILD_ABS/sysroot/x86_64-elf/include/c++/v1/" ]]; then
     SYSROOT_INC_PATH="$SYSROOT_INC_PATH -isystem $BUILD_ABS/sysroot/x86_64-elf/include/c++/v1/"
+fi
+
+if [[ -d "$BUILD_ABS/sysroot/x86_64-elf/include/" ]]; then
+    SYSROOT_INC_PATH="$SYSROOT_INC_PATH -isystem $BUILD_ABS/sysroot/x86_64-elf/include/"
 fi
 
 # ------------------------------------------------------------------------------

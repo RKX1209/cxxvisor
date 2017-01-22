@@ -105,22 +105,15 @@ copy_script() {
 
 copy_scripts() {
   copy_script "bareflank_gcc_wrapper.sh"
-  # copy_script "filter_module_file.sh"
   copy_script "build_newlib.sh"
   copy_script "build_libcxx.sh"
   copy_script "build_libcxxabi.sh"
   copy_script "build_libbfc.sh"
-  copy_script "build_libllvm.sh"
-  #copy_script "build_clang.sh"    
-  # copy_script "build_driver.sh"
-  # copy_script "load_driver.sh"
-  # copy_script "clean_driver.sh"
   copy_script "fetch_newlib.sh"
   copy_script "fetch_libcxx.sh"
   copy_script "fetch_libcxxabi.sh"
   copy_script "fetch_llvm.sh"
   copy_script "fetch_libbfc.sh"
-  # copy_script "verify_source.sh"
 }
 create_wrapper_links () {
     if [[ ! -f "$BUILD_ABS/build_scripts/x86_64-bareflank-gcc" ]]; then
