@@ -89,30 +89,7 @@ Abstract:
 #endif
 
 
-#if (__STDC_VERSION__ < 199901L)
-  //
-  // No ANSI C 2000 stdint.h integer width declarations, so define equivalents
-  //
- 
-  #if _MSC_EXTENSIONS 
-    
-    //
-    // use Microsoft* C complier dependent interger width types 
-    //
-    typedef unsigned __int64    uint64_t;
-    typedef __int64             int64_t;
-    typedef unsigned __int32    uint32_t;
-    typedef __int32             int32_t;
-    typedef unsigned short      uint16_t;
-    typedef short               int16_t;
-    typedef unsigned char       uint8_t;
-    typedef char                int8_t;
-  #else
 
-    //
-    // Assume standard IA-32 alignment. 
-    // BugBug: Need to check portability of long long
-    //
     typedef unsigned long long  uint64_t;
     typedef long long           int64_t;
     typedef unsigned int        uint32_t;
@@ -121,13 +98,6 @@ Abstract:
     typedef short               int16_t;
     typedef unsigned char       uint8_t;
     typedef char                int8_t;
-  #endif
-#else
-  //
-  // Use ANSI C 2000 stdint.h integer width declarations
-  //
-  #include "stdint.h"
-#endif
 
 //
 // Native integer size in stdint.h
