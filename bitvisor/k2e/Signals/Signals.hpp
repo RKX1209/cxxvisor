@@ -1,7 +1,8 @@
 #ifndef SIGNALS_HPP
 #define SIGNALS_HPP
 
-#include <common/list.h>
+#include <limits.h>
+#include <vector>
 #include <k2e/ModuleDescriptor.h>
 #include <k2e/k2e_callback.hpp>
 
@@ -10,14 +11,13 @@ namespace sigc {
 using namespace k2e;
 
 struct K2ECallbackEntry {
-  LIST_DEFINE (cb_func_list);
   Plugin *plugin;
   K2ECallbackFunc_t func;
 };
 
 class signal {
 private:
-  LIST_DEFINE_HEAD(cb_func_list);
+  std::vector<K2ECallbackEntry*> m_cblist;
 public:
   signal() {
   }
