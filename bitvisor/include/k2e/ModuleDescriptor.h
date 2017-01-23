@@ -1,17 +1,17 @@
 #ifndef _MODULE_DESCRIPTOR_H
 #define _MODULE_DESCRIPTOR_H
 
-#include <common/types.h>
+#include <stdint.h>
 
 struct ModuleDescriptor{
   //Virtual address where the module was loaded
-  u64 LoadVBase;
+  uint64_t LoadVBase;
 
   //Physical address where the module was loaded
-  u64 LoadPBase;
+  uint64_t LoadPBase;
 
   //The size of image of the module
-  u64 Size;
+  uint64_t Size;
 };
 
 #endif

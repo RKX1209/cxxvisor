@@ -14,11 +14,5 @@ public:
   void execute();
 };
 
-class GlobalTest {
-public:
-  GlobalTest();
-  ~GlobalTest();  
-};
-
 }
 #endif

@@ -1,8 +1,10 @@
 #ifndef K2E_PLUGIN_HPP
 #define K2E_PLUGIN_HPP
 
-#include <common/list.h>
-#include <common/types.h>
+#include <limits.h>
+#include <string>
+#include <vector>
+#include <set>
 
 namespace k2e {
 class K2E;
@@ -31,37 +33,51 @@ public:
 
 struct PluginInfo {
   /** Unique name of the plugin */
-  char* name;
+  std::string name;
 
   /** Human-readable description of the plugin */
-  char* description;
+  std::string description;
 
   /** Name of a plugin function (only one plugin is allowed for each function) */
-  char* functionName;
+  std::string functionName;
 
   /** A function to create a plugin instance */
   Plugin* (*instanceCreator)(K2E*);
 
-  /** List entry */
-  LIST_DEFINE(Plugins);
 };
 
 class PluginsFactory {
 private:
-  static LIST_DEFINE_HEAD2(Plugins);
+  //typedef std::map<std::string, const PluginInfo*> PluginsMap;
+  //PluginsMap m_pluginsMap;
+  std::vector<const PluginInfo*> m_pluginsList;
 public:
-  PluginsFactory() {}
-  static void registerPlugin(PluginInfo *pluginInfo);
+  PluginsFactory();
+
+  void registerPlugin(const PluginInfo *pluginInfo);
+
+  const std::vector<const PluginInfo*>& getPluginInfoList() const;
   const PluginInfo* getPluginInfo(char *name) const;
+
   Plugin* createPlugin(K2E* k2e, char *name) const;
 };
 
 class CompiledPlugin {
+public:
+  typedef std::set<const PluginInfo *> CompiledPlugins;
 private:
+  static CompiledPlugins *s_compiledPlugins;
   CompiledPlugin();
 public:
   CompiledPlugin(PluginInfo *info) {
-    PluginsFactory::registerPlugin(info);
+    if (!s_compiledPlugins) {
+      s_compiledPlugins = new CompiledPlugins();
+    }
+    s_compiledPlugins->insert(info);
+    //PluginsFactory::registerPlugin(info);
+  }
+  static CompiledPlugins* getPlugins() {
+    return s_compiledPlugins;
   }
 };
 
@@ -80,9 +96,11 @@ public:
   PluginInfo className::s_pluginInfo = {                                   \
       #className, description, functionName,                                     \
       _pluginCreatorHelper<className>                                            \
-  };
+  }; \
+  CompiledPlugin s_##className(className::getPluginInfoStatic())
 
 template<class C>
-Plugin* _pluginCreatorHelper(K2E* k2e) { Plugin* pl = new C(k2e); pl->initialize(); return pl; }
+Plugin* _pluginCreatorHelper(K2E* k2e) { return new C(k2e); }
+
 }
 #endif

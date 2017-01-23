@@ -1,34 +1,46 @@
 #include <k2e/Plugin.hpp>
 #include <k2e/K2E.hpp>
-#include <core/string.h>
+#include <k2e/Utils.h>
 extern "C" {
 #include <core/printf.h>
 }
 
 namespace k2e {
 
+using namespace std;
+
+CompiledPlugin::CompiledPlugins* CompiledPlugin::s_compiledPlugins = NULL;
+
 void Plugin::initialize(void)
 {
 }
 
-struct list PluginsFactory::Plugins_head = { 0 }; //XXX: bit ugly
-void PluginsFactory::registerPlugin(PluginInfo *pluginInfo)
+PluginsFactory::PluginsFactory()
 {
-  //printf("Factory::register %s\n", pluginInfo->name);
-  LIST_APPEND(Plugins, pluginInfo);
+  CompiledPlugin::CompiledPlugins *plugins = CompiledPlugin::getPlugins();
+  foreach2(it, plugins->begin(), plugins->end()) {
+      registerPlugin(*it);
+  }
+}
+
+void PluginsFactory::registerPlugin(const PluginInfo *pluginInfo)
+{
+  m_pluginsList.push_back(pluginInfo);
+}
+
+const vector<const PluginInfo*>& PluginsFactory::getPluginInfoList() const
+{
+    return m_pluginsList;
 }
 
 const PluginInfo* PluginsFactory::getPluginInfo(char *name) const
 {
-  PluginInfo *pinfo;
-  LIST_FOREACH(Plugins, pinfo)
-  {
-    if (!strcmp(pinfo->name, name))
-    {
-      return pinfo;
-    }
+  CompiledPlugin::CompiledPlugins *plugins = CompiledPlugin::getPlugins();
+
+  foreach2(it, plugins->begin(), plugins->end()) {
+    if ((*it)->name == name) return *it;
   }
-  return 0;
+  return NULL;
 
 }
 /** Plugin must be registered by registerPlugin before calling createPlugin. */

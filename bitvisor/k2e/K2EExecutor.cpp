@@ -20,14 +20,4 @@ void K2EExecutor::execute()
 
 }
 
-GlobalTest::GlobalTest()
-{
-  printf("GlobalTest::GlobalTest");
-}
-
-GlobalTest::~GlobalTest()
-{
-  printf("GlobalTest::~GlobalTest");
-}
-
 }
