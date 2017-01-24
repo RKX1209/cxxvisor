@@ -509,5 +509,5 @@ INITFUNC ("bsp0", debug_on_shift_key);
 INITFUNC ("global1", print_boot_msg);
 INITFUNC ("global3", copy_minios);
 INITFUNC ("global3", get_shiftflags);
-INITFUNC ("vmmcal1", cxx_init);
+INITFUNC ("vmmcal0", cxx_init);
 INITFUNC ("vmmcal1", k2e_init);

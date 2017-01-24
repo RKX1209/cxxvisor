@@ -41,6 +41,7 @@
 #include "vt_main.h"
 #include "vt_paging.h"
 #include "vt_regs.h"
+#include <k2e/k2e_bitvisor.h>
 
 #define NUM_OF_EPTBL	1024
 #define EPTE_READ	0x1
@@ -66,7 +67,6 @@ struct vt_ept {
 	} cur;
 };
 
-struct vt_exec_hook hook_point = { 0, 0, 0, 0 };
 bool nmi_by_host = false;
 
 void
@@ -147,19 +147,7 @@ cur_fill (struct vt_ept *ept, u64 gphys, int level)
 	return p;
 }
 
-bool
-in_hook_point (struct vt_exec_hook* hook, u64 gphys)
-{
-	u64* m = (u64*)(hook->mod_areas);
-	u32 i;
-	if (hook->available) {
-			for (i = 0; i < hook->size; i++) {
-				if (m[i] <= gphys && gphys <= m[i] + PAGESIZE) return true;
-			}
-	}
-	return false;
-}
-
+//hook(gphys, HOOK_TYPE_READ), unhook(gphys)
 static void
 vt_ept_map_page_sub (struct vt_ept *ept, bool write, u64 gphys)
 {
@@ -167,6 +155,7 @@ vt_ept_map_page_sub (struct vt_ept *ept, bool write, u64 gphys)
 	u64 hphys;
 	u32 hattr;
 	u64 *p;
+	u8 hooktype;
 
 	cur_move (ept, gphys);
 	p = cur_fill (ept, gphys, 0);
@@ -174,14 +163,8 @@ vt_ept_map_page_sub (struct vt_ept *ept, bool write, u64 gphys)
 	if (fakerom && write)
 		panic ("EPT: Writing to VMM memory.");
 
-	if (in_hook_point (&hook_point, gphys)) {
-		hattr = (cache_get_gmtrr_type (gphys) << EPTE_MT_SHIFT) |
-			EPTE_READ | EPTE_WRITE; // witout EXEC permission
-		printf("remove x-bit from 0x%llx\n", gphys);
-	}
-	else
-		hattr = (cache_get_gmtrr_type (gphys) << EPTE_MT_SHIFT) |
-			EPTE_READEXEC | EPTE_WRITE;
+	hooktype = k2e_get_hooktype(gphys);
+	hattr = (cache_get_gmtrr_type (gphys) << EPTE_MT_SHIFT) | hooktype;
 
 	if (fakerom)
 		hattr &= ~EPTE_WRITE;
@@ -265,34 +248,30 @@ vt_ept_map_page (struct vt_ept *ept, bool write, u64 gphys)
 }
 
 void
-vt_ept_set_hook (u64 gphys, u32 size)
+k2e_register_hook(uint64_t* mod_areas_guest, uint32_t area_num, uint8_t hook_type)
 {
 	struct vt_ept *ept;
 	u32 i;
-	u64 gp;
-	u64 *m;
-	hook_point.mod_areas = (u64*)alloc(sizeof *m * size);
-	hook_point.size = size;
-	hook_point.available = 1;
+	u64 *mod_areas_host, *m;
+	mod_areas_host = (u64*)alloc(sizeof *m * area_num);
 
 	ept = current->u.vt.ept;
 
 	/* Clearing EPT entries, to hook */
 	vt_ept_clear_all_slow();
 
-	printf("vt_ept_set_hook 0x%llx(%d)\n", gphys, size);
+	//printf("vt_ept_set_hook 0x%llx(%d)\n", gphys, size);
 
-	/* remap address range of kernel module
+	/* Translate guest address range of kernel module to hosts'
 	 * TODO: 2M page
 	 */
-	m = hook_point.mod_areas;
-
-	for (i = 0; i < hook_point.size; i++) {
-		read_gphys_q(gphys + sizeof(u64) * i, (void*)&m[i], 0);
-		printf("ares[%d] = 0x%llx\n", i, m[i]);
-		vt_ept_map_page(ept, false, m[i]);
+	for (i = 0; i < area_num; i++) {
+		read_gphys_q(mod_areas_guest[i], (void*)&mod_areas_host[i], 0);
+		printf("areas[%d] = 0x%llx\n", i, mod_areas_host[i]);
+		vt_ept_map_page(ept, false, mod_areas_host[i]);
 	}
 
+	k2e_register_hook_internal(mod_areas_host, area_num, hook_type);
 }
 
 void

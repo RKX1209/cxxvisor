@@ -778,21 +778,21 @@ do_ept_violation (void)
 	// if (0xffffffffc0910000 <= vp && vp <= 0xffffffffc0930000) {
 	// 	printf("(%d)violation: may be in module 0x%llx(%s)\n", currentcpu->cpunum, vp, !!(eqe & EPT_VIOLATION_EXIT_QUAL_WRITE_BIT)?"write":(!!(eqe & EPT_VIOLATION_EXIT_QUAL_EXEC_BIT)?"exec": "read"));
 	// }
-	if (in_hook_point (&hook_point, gp)) {
-		printf("(%d)ept: 0x%llx(%s)\n", currentcpu->cpunum, gp, !!(eqe & EPT_VIOLATION_EXIT_QUAL_WRITE_BIT)?"write":(!!(eqe & EPT_VIOLATION_EXIT_QUAL_EXEC_BIT)?"exec": "read"));
-	}
-	if (!!(eqe & EPT_VIOLATION_EXIT_QUAL_EXEC_BIT) && in_hook_point(&hook_point, gp) ) {
-		printf("X-bit violation: 0x%llx\n", gp);
-		/* Clear all TLBs */
-		//vt_ept_clear_all_slow ();
-		interp = 1;
-	}
+	// if (in_hook_point (&hook_point, gp)) {
+	// 	printf("(%d)ept: 0x%llx(%s)\n", currentcpu->cpunum, gp, !!(eqe & EPT_VIOLATION_EXIT_QUAL_WRITE_BIT)?"write":(!!(eqe & EPT_VIOLATION_EXIT_QUAL_EXEC_BIT)?"exec": "read"));
+	// }
+	// if (!!(eqe & EPT_VIOLATION_EXIT_QUAL_EXEC_BIT) && in_hook_point(&hook_point, gp) ) {
+	// 	printf("X-bit violation: 0x%llx\n", gp);
+	// 	/* Clear all TLBs */
+	// 	//vt_ept_clear_all_slow ();
+	// 	interp = 1;
+	// }
 	vt_paging_npf (!!(eqe & EPT_VIOLATION_EXIT_QUAL_WRITE_BIT), gp);
-	if (interp) {
-		//e = cpu_interpreter();
-		hook_point.available = 0;
-		interp = 0;
-	}
+	// if (interp) {
+	// 	//e = cpu_interpreter();
+	// 	hook_point.available = 0;
+	// 	interp = 0;
+	// }
 }
 
 static void

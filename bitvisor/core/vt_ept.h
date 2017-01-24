@@ -30,18 +30,11 @@
 #ifndef _CORE_VT_EPT_H
 #define _CORE_VT_EPT_H
 
+#include <stdint.h>
 #include "types.h"
 
 struct vcpu;
 
-struct vt_exec_hook {
-	virt_t gvirt;
-	u32 size;
-	u64 *mod_areas;
-	u8 available;
-};
-
-extern struct vt_exec_hook hook_point;
 extern bool nmi_by_host;
 
 void vt_ept_init (void);
@@ -52,8 +45,8 @@ void vt_ept_clear_all (void);
 void vt_ept_clear_all_slow (void);
 bool vt_ept_extern_mapsearch (struct vcpu *p, phys_t start, phys_t end);
 void vt_ept_map_1mb (void);
-void vt_ept_set_hook (u64 gvirt, u32 size);
-bool in_hook_point (struct vt_exec_hook* hook, u64 gphys);
+void k2e_register_hook(uint64_t*, uint32_t, uint8_t);
+//bool in_hook_point (struct vt_exec_hook* hook, u64 gphys);
 
 
 #endif
