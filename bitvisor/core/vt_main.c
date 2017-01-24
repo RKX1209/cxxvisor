@@ -57,6 +57,8 @@
 #include "vt_regs.h"
 #include "vt_vmcs.h"
 
+#include <k2e/k2e_bitvisor.h>
+
 #define EPT_VIOLATION_EXIT_QUAL_WRITE_BIT 0x2
 #define EPT_VIOLATION_EXIT_QUAL_EXEC_BIT 0x4
 #define STAT_EXIT_REASON_MAX EXIT_REASON_XSETBV
@@ -775,18 +777,14 @@ do_ept_violation (void)
 	asm_vmread (VMCS_EXIT_QUALIFICATION, &eqe);
 	asm_vmread64 (VMCS_GUEST_PHYSICAL_ADDRESS, &gp);
 
-	// if (0xffffffffc0910000 <= vp && vp <= 0xffffffffc0930000) {
-	// 	printf("(%d)violation: may be in module 0x%llx(%s)\n", currentcpu->cpunum, vp, !!(eqe & EPT_VIOLATION_EXIT_QUAL_WRITE_BIT)?"write":(!!(eqe & EPT_VIOLATION_EXIT_QUAL_EXEC_BIT)?"exec": "read"));
-	// }
-	// if (in_hook_point (&hook_point, gp)) {
-	// 	printf("(%d)ept: 0x%llx(%s)\n", currentcpu->cpunum, gp, !!(eqe & EPT_VIOLATION_EXIT_QUAL_WRITE_BIT)?"write":(!!(eqe & EPT_VIOLATION_EXIT_QUAL_EXEC_BIT)?"exec": "read"));
-	// }
-	// if (!!(eqe & EPT_VIOLATION_EXIT_QUAL_EXEC_BIT) && in_hook_point(&hook_point, gp) ) {
-	// 	printf("X-bit violation: 0x%llx\n", gp);
-	// 	/* Clear all TLBs */
-	// 	//vt_ept_clear_all_slow ();
-	// 	interp = 1;
-	// }
+	if (!!(eqe & EPT_VIOLATION_EXIT_QUAL_EXEC_BIT) && k2e_is_hooked(gp, HOOK_TYPE_EXEC)) {
+		/* hook point is hit */
+		printf("~(0x%02x | 0x%02x) = 0x%02x\n",k2e_get_hooktype(gp), HOOK_TYPE_EXEC, k2e_is_hooked(gp, HOOK_TYPE_EXEC));
+		printf("X-bit hook violation: 0x%llx\n", gp);
+		/* Clear all TLBs */
+		//vt_ept_clear_all_slow ();
+		interp = 1;
+	}
 	vt_paging_npf (!!(eqe & EPT_VIOLATION_EXIT_QUAL_WRITE_BIT), gp);
 	// if (interp) {
 	// 	//e = cpu_interpreter();

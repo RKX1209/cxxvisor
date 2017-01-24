@@ -4,9 +4,9 @@
 #include <stdint.h>
 
 // hooked: 0
-#define HOOK_TYPE_READ		0x110
-#define HOOK_TYPE_WRITE		0x101
-#define HOOK_TYPE_EXEC		0x011
+#define HOOK_TYPE_READ		0b110
+#define HOOK_TYPE_WRITE		0b101
+#define HOOK_TYPE_EXEC		0b011
 
 #ifdef __cplusplus
 namespace k2e {
