@@ -256,22 +256,20 @@ k2e_register_hook(uint64_t* mod_areas_guest, uint32_t area_num, uint8_t hook_typ
 	mod_areas_host = (u64*)alloc(sizeof *m * area_num);
 
 	ept = current->u.vt.ept;
-	printf("k2e_register_hook %p, 0x%d, 0x%x\n", mod_areas_guest, area_num, hook_type);
+	//printf("k2e_register_hook %p, 0x%d, 0x%x\n", mod_areas_guest, area_num, hook_type);
 	/* Clearing EPT entries, to hook */
-	//vt_ept_clear_all_slow();
-
-	//printf("vt_ept_set_hook 0x%llx(%d)\n", gphys, size);
+	vt_ept_clear_all_slow();
 
 	/* Translate guest address range of kernel module to hosts'
 	 * TODO: 2M page
 	 */
-	// for (i = 0; i < area_num; i++) {
-	// 	read_gphys_q(mod_areas_guest[i], (void*)&mod_areas_host[i], 0);
-	// 	printf("areas[%d] = 0x%llx\n", i, mod_areas_host[i]);
-	// 	vt_ept_map_page(ept, false, mod_areas_host[i]);
-	// }
+	for (i = 0; i < area_num; i++) {
+		read_gphys_q(&mod_areas_guest[i], &mod_areas_host[i], 0);
+		printf("areas[%d] = 0x%llx\n", i, mod_areas_host[i]);
+		vt_ept_map_page(ept, false, mod_areas_host[i]);
+	}
 
-	//k2e_register_hook_internal(mod_areas_host, area_num, hook_type);
+	k2e_register_hook_internal(mod_areas_host, area_num, hook_type);
 }
 
 void
