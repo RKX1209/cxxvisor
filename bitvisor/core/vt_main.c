@@ -779,7 +779,6 @@ do_ept_violation (void)
 
 	if (!!(eqe & EPT_VIOLATION_EXIT_QUAL_EXEC_BIT) && k2e_is_hooked(gp, HOOK_TYPE_EXEC)) {
 		/* hook point is hit */
-		//printf("~(0x%02x | 0x%02x) = 0x%02x\n",k2e_get_hooktype(gp), HOOK_TYPE_EXEC, k2e_is_hooked(gp, HOOK_TYPE_EXEC));
 		printf("X-bit hook violation: 0x%llx\n", gp);
 		/* Clear all TLBs */
 		//vt_ept_clear_all_slow ();

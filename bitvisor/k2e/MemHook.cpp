@@ -26,7 +26,7 @@ void register_hook(class MemHookInfo* hook, HookType hook_type) {
     if (it != hooked_area->end()) {
       printf("already exist\n");
       /* address already exist. So update attribute (nxor) */
-      it->set_hooktype(~(it->get_hooktype() ^ hook_type));
+      it->set_hooktype((uint8_t)~(it->get_hooktype() ^ hook_type));
     } else {
       printf("not exist- insert new one\n");
       /* Puts hook points */
@@ -40,20 +40,26 @@ void register_hook(class MemHookInfo* hook, HookType hook_type) {
 extern "C" {
 void k2e_register_hook_internal(uint64_t* mod_area, uint32_t area_num, uint8_t hook_type) {
   printf("k2e_register_hook_internal\n");
-  // MemHookInfo *hook_info = new MemHookInfo(mod_area, area_num, hook_type);
-  // if (hook_info)
-  //   register_hook(hook_info, hook_type);
+  MemHookInfo *hook_info = new MemHookInfo(mod_area, area_num, hook_type);
+  if (hook_info)
+    register_hook(hook_info, hook_type);
 }
 
 uint8_t k2e_get_hooktype(uint64_t addr) {
   HookArea *hooked_area = MemHookInfo::get_hooked_area();
-  HookedPage hp(addr, 0);
-  //HookArea::iterator it = hooked_area->lower_bound(hp);
-
+  // HookedPage hp(addr, 0);
+  // HookArea::iterator it = hooked_area->lower_bound(hp);
   // if (it != hooked_area->end() && addr <= (*it).get_address() + PAGESIZE) {
   //   /* addr is in range [hooked_ent, hooked_ent+PAGESIZE] */
+  //   printf("found entry addr 0x%llx [0x%llx, 0x%llx] 0x%02x\n", addr, (*it).get_address(), (*it).get_address() + PAGESIZE, (*it).get_hooktype());
   //   return (*it).get_hooktype();
   // }
+  foreach2(it, hooked_area->begin(), hooked_area->end()) {
+    if (it->get_address() <= addr && addr <= it->get_address() + PAGESIZE) {
+      printf("found entry addr 0x%llx [0x%llx, 0x%llx] 0x%02x\n", addr, (*it).get_address(), (*it).get_address() + PAGESIZE, (*it).get_hooktype());
+      return (*it).get_hooktype();
+    }
+  }
 
   return ~0;
 }

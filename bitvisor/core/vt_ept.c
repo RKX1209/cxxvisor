@@ -266,10 +266,14 @@ k2e_register_hook(uint64_t* mod_areas_guest, uint32_t area_num, uint8_t hook_typ
 	for (i = 0; i < area_num; i++) {
 		read_gphys_q(&mod_areas_guest[i], &mod_areas_host[i], 0);
 		printf("areas[%d] = 0x%llx\n", i, mod_areas_host[i]);
-		vt_ept_map_page(ept, false, mod_areas_host[i]);
 	}
 
 	k2e_register_hook_internal(mod_areas_host, area_num, hook_type);
+
+	/* Remapping with hook infos */
+	for (i = 0; i < area_num; i++) {
+		vt_ept_map_page(ept, false, mod_areas_host[i]);
+	}
 }
 
 void
