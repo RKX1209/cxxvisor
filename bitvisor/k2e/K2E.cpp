@@ -63,16 +63,20 @@ K2E::K2E()
   // }
   initExecutor();
   initPlugins();
+  printf("K2E::init() </end>\n");  
 }
 
 void K2E::initPlugins()
 {
   m_pluginsFactory = new PluginsFactory();
+  m_corePlugin = static_cast<CorePlugin*>(
+                m_pluginsFactory->createPlugin(this, "CorePlugin"));
+  m_activePluginsList.push_back(m_corePlugin);
   m_annotation = static_cast<Annotation*>(
                 m_pluginsFactory->createPlugin(this, "Annotation"));
   m_activePluginsList.push_back(m_annotation);
 
-  //printf("k2e::initPlugins() fact = %p annot = %p\n", m_pluginsFactory, m_annotation);
+  printf("k2e::initPlugins() fact = %p annot = %p\n", m_pluginsFactory, m_annotation);
 
   foreach2(it, m_activePluginsList.begin(), m_activePluginsList.end()) {
     (*it)->initialize();

@@ -45,7 +45,7 @@ uint8_t k2e_get_hooktype(uint64_t addr) {
     return (*it).get_hooktype();
   }
 
-  return 0;
+  return ~0;
 }
 
 }

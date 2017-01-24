@@ -164,7 +164,7 @@ vt_ept_map_page_sub (struct vt_ept *ept, bool write, u64 gphys)
 		panic ("EPT: Writing to VMM memory.");
 
 	hooktype = k2e_get_hooktype(gphys);
-	hattr = (cache_get_gmtrr_type (gphys) << EPTE_MT_SHIFT) | hooktype;
+	hattr = (cache_get_gmtrr_type (gphys) << EPTE_MT_SHIFT) | (hooktype & 0x7);
 
 	if (fakerom)
 		hattr &= ~EPTE_WRITE;

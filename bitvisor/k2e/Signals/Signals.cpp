@@ -2,6 +2,7 @@
 #include <k2e/Utils.h>
 extern "C" {
 #include <core/mm.h>
+#include <core/printf.h>
 }
 namespace sigc {
 using namespace k2e;

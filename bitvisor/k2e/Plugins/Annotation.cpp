@@ -2,6 +2,7 @@
 extern "C" {
 #include "core/printf.h"
 }
+#include <k2e/K2EExecutor.hpp>
 #include <k2e/K2E.hpp>
 #include <k2e/ModuleDescriptor.h>
 
@@ -11,9 +12,11 @@ K2E_DEFINE_PLUGIN(Annotation, "Plugin for monitoring module and bypasses functio
 
 void Annotation::initialize()
 {
+  printf("Annotation::initialize()\n");
   k2e()->getCorePlugin()->onModuleLoad.connect(
                 static_cast<Plugin*>(this),
                 static_cast<K2ECallbackFunc_t>(&Annotation::onModuleLoad));
+  printf("Annotation::initialize() </end>\n");
 }
 
 void Annotation::onModuleLoad(K2ECallbackParams *params)
